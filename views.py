@@ -7,8 +7,6 @@ from omeroweb.http import HttpJsonResponse
 import omero
 from omero.rtypes import rstring, rlong, wrap, unwrap
 
-from utils import createTagAnnotationsLinks
-
 from copy import deepcopy
 
 from omeroweb.webclient import tree
@@ -18,38 +16,40 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from . import settings
+
 
 @login_required(setGroupContext=True)
-def process_update(request, conn=None, **kwargs):
+def update(request, conn=None, **kwargs):
 
     if not request.POST:
         return HttpResponseNotAllowed('Methods allowed: POST')
 
-    images = json.loads(request.body)
-
-    additions = []
-    removals = []
-
-    for image in images:
-        image_id = image['imageId']
-
-        additions.extend(
-            [
-                (long(image_id), long(addition),)
-                for addition in image['additions']
-            ]
-        )
-
-        removals.extend(
-            [
-                (long(image_id), long(removal),)
-                for removal in image['removals']
-            ]
-        )
-
-    # TODO Interface for createTagAnnotationsLinks is a bit nasty, but go
-    # along with it for now
-    createTagAnnotationsLinks(conn, additions, removals)
+    # images = json.loads(request.body)
+    #
+    # additions = []
+    # removals = []
+    #
+    # for image in images:
+    #     image_id = image['imageId']
+    #
+    #     additions.extend(
+    #         [
+    #             (long(image_id), long(addition),)
+    #             for addition in image['additions']
+    #         ]
+    #     )
+    #
+    #     removals.extend(
+    #         [
+    #             (long(image_id), long(removal),)
+    #             for removal in image['removals']
+    #         ]
+    #     )
+    #
+    # # TODO Interface for createTagAnnotationsLinks is a bit nasty, but go
+    # # along with it for now
+    # createTagAnnotationsLinks(conn, additions, removals)
 
     return HttpResponse('')
 
@@ -60,10 +60,13 @@ def process_update(request, conn=None, **kwargs):
 #     return image
 
 @login_required(setGroupContext=True)
-def main(request, conn=None, **kwargs):
+def dataset_keys(request, conn=None, **kwargs):
 
     if not request.GET:
         return HttpResponseNotAllowed('Methods allowed: GET')
+
+
+    print(request.GET)
 
     dataset_id = request.GET.get("datasetId")
 
@@ -93,8 +96,10 @@ def main(request, conn=None, **kwargs):
         FROM Dataset dataset
         JOIN dataset.annotationLinks links
         JOIN links.child anno
+        JOIN anno.mapValue mapValues
         WHERE anno.class = MapAnnotation
         AND dataset.id = :did
+        AND mapValues.name = 'group_form'
         """
 
     annotations = []
@@ -105,6 +110,8 @@ def main(request, conn=None, **kwargs):
             print '\t%s = %s' % (pair.name, pair.value)
             kvs[pair.name] = pair.value
         annotations.append(kvs)
+
+    print('Test is: %s' % settings.OMERO_FORMS_PRIV_USER)
 
     return HttpJsonResponse(
         {

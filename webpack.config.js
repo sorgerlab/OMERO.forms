@@ -5,8 +5,8 @@ var path = require('path');
 
 module.exports = {
   entry: {
-    'bundle.min': ['babel-polyfill', './src/main.jsx'],
-    'bundle': ['babel-polyfill', './src/main.jsx'],
+    'bundle.min': ['./src/main.jsx'],
+    'bundle': ['./src/main.jsx'],
   },
   output: {
     path: './static/forms/js',
@@ -37,6 +37,7 @@ module.exports = {
       { test: /\.png$/,
         loader: "url-loader?limit=100000"
       }
+
     ]
   },
   resolve: {

@@ -1,20 +1,21 @@
 {% load url from future %}
 
-<script src="{% static "forms/js/bundle.min.js" %}"></script>
+<script src="{% static "forms/js/bundle.js" %}"></script>
 
 <script>
 
 $(function() {
 
   var pluginIndex = {{ forloop.counter }};
-  var url="{% url 'omeroforms_main' %}";
+  var urlDatasetKeys="{% url 'omeroforms_dataset_keys' %}";
   var urlUpdate="{% url 'omeroforms_update' %}";
 
 
   var reactRender = function(datatree, selectedNode) {
     var datasetId = selectedNode.data.obj.id;
+    var randomShit = "foobar";
 
-    omeroforms.default(datasetId, url, urlUpdate);
+    omeroforms.default(datasetId, urlDatasetKeys, urlUpdate);
 
   };
 

@@ -6,9 +6,9 @@ from . import views
 urlpatterns = patterns(
     'django.views.generic.simple',
 
-    url(r'^omeroforms/main/$',
-        views.main,
-        name="omeroforms_main"),
+    url(r'^omeroforms/dataset_keys/$',
+        views.dataset_keys,
+        name="omeroforms_dataset_keys"),
 
     # process form submission
     url(r'^omeroforms/submit/$',

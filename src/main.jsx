@@ -1,12 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Forms from './AutoTagForm';
+import Forms from './Forms';
 
-function omeroforms(datasetId, url, urlUpdate) {
+function omeroforms(datasetId, urlDatasetKeys, urlUpdate) {
   ReactDOM.render(
-    <AutoTagForm url={url}
-                 urlUpdate={urlUpdate}
-                 datasetId={datasetId} />,
+    <Forms urlDatasetKeys={urlDatasetKeys}
+           urlUpdate={urlUpdate}
+           datasetId={datasetId} />,
     document.getElementById('omero_forms_panel')
   );
 }
