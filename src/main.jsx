@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import AutoTagForm from './AutoTagForm';
+import Forms from './AutoTagForm';
 
 function omeroforms(datasetId, url, urlUpdate) {
   ReactDOM.render(

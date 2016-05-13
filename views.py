@@ -53,72 +53,11 @@ def process_update(request, conn=None, **kwargs):
 
     return HttpResponse('')
 
-
-@login_required(setGroupContext=True)
-def create_tag(request, conn=None, **kwargs):
-    """
-    Creates a Tag from POST data.
-    """
-
-    if not request.POST:
-        return HttpResponseNotAllowed('Methods allowed: POST')
-
-    tag = json.loads(request.body)
-
-    tag_value = tag['value']
-    tag_description = tag['description']
-
-    tag = omero.model.TagAnnotationI()
-    tag.textValue = rstring(str(tag_value))
-    if tag_description is not None:
-        tag.description = rstring(str(tag_description))
-
-    tag = conn.getUpdateService().saveAndReturnObject(tag, conn.SERVICE_OPTS)
-
-    params = omero.sys.ParametersI()
-    service_opts = deepcopy(conn.SERVICE_OPTS)
-
-    qs = conn.getQueryService()
-
-    q = '''
-        select new map(tag.id as id,
-               tag.textValue as textValue,
-               tag.description as description,
-               tag.details.owner.id as ownerId,
-               tag as tag_details_permissions,
-               tag.ns as ns,
-               (select count(aalink2)
-                from AnnotationAnnotationLink aalink2
-                where aalink2.child.class=TagAnnotation
-                and aalink2.parent.id=tag.id) as childCount)
-        from TagAnnotation tag
-        where tag.id = :tid
-        '''
-
-    params.add('tid', rlong(tag.id))
-
-    e = qs.projection(q, params, service_opts)[0]
-    e = unwrap(e)
-    e = [e[0]["id"],
-         e[0]["textValue"],
-         e[0]["description"],
-         e[0]["ownerId"],
-         e[0]["tag_details_permissions"],
-         e[0]["ns"],
-         e[0]["childCount"]]
-
-    tag = tree._marshal_tag(conn, e)
-
-    return HttpJsonResponse(
-        tag
-    )
-
-
-def _marshal_image(conn, row, tags_on_images):
-    image = tree._marshal_image(conn, row[0:5])
-    image['clientPath'] = unwrap(row[5])
-    image['tags'] = tags_on_images.get(image['id']) or []
-    return image
+# def _marshal_image(conn, row, tags_on_images):
+#     image = tree._marshal_image(conn, row[0:5])
+#     image['clientPath'] = unwrap(row[5])
+#     image['tags'] = tags_on_images.get(image['id']) or []
+#     return image
 
 @login_required(setGroupContext=True)
 def main(request, conn=None, **kwargs):
@@ -137,7 +76,7 @@ def main(request, conn=None, **kwargs):
     if group_id is None:
         group_id = conn.getEventContext().groupId
 
-    # Details about the images specified
+    # Details about the annotations specified
     params = omero.sys.ParametersI()
     service_opts = deepcopy(conn.SERVICE_OPTS)
 
@@ -158,15 +97,17 @@ def main(request, conn=None, **kwargs):
         AND dataset.id = :did
         """
 
-    kvs = {}
+    annotations = []
     for e in qs.projection(q, params, service_opts):
         anno = e[0]
+        kvs = {}
         for pair in anno.getMapValue():
             print '\t%s = %s' % (pair.name, pair.value)
             kvs[pair.name] = pair.value
+        annotations.append(kvs)
 
     return HttpJsonResponse(
         {
-            'kvs': kvs
+            'annotations': annotations
         }
     )
