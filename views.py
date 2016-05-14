@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 from . import settings
 
-
 @login_required(setGroupContext=True)
 def update(request, conn=None, **kwargs):
 
@@ -65,9 +64,6 @@ def dataset_keys(request, conn=None, **kwargs):
     if not request.GET:
         return HttpResponseNotAllowed('Methods allowed: GET')
 
-
-    print(request.GET)
-
     dataset_id = request.GET.get("datasetId")
 
     if not dataset_id:
@@ -87,31 +83,46 @@ def dataset_keys(request, conn=None, **kwargs):
     service_opts.setOmeroGroup(group_id)
 
     params.add('did', wrap(dataset_id))
+    params.add('oname', wrap(settings.OMERO_FORMS_PRIV_USER))
 
     qs = conn.getQueryService()
 
-    # Get the key-values that are applied to this dataset
+    # Get the key-values that are applied to this dataset by the form master
     q = """
         SELECT anno
         FROM Dataset dataset
         JOIN dataset.annotationLinks links
         JOIN links.child anno
-        JOIN anno.mapValue mapValues
+        JOIN anno.details details
         WHERE anno.class = MapAnnotation
         AND dataset.id = :did
-        AND mapValues.name = 'group_form'
+        AND details.owner.omeName = :oname
         """
+# JOIN anno.mapValue mapValues
+# AND mapValues.name = 'group_form'
 
     annotations = []
     for e in qs.projection(q, params, service_opts):
-        anno = e[0]
+        anno = e[0].val
         kvs = {}
         for pair in anno.getMapValue():
             print '\t%s = %s' % (pair.name, pair.value)
             kvs[pair.name] = pair.value
         annotations.append(kvs)
 
-    print('Test is: %s' % settings.OMERO_FORMS_PRIV_USER)
+
+    # print('User is: %s' % settings.OMERO_FORMS_PRIV_USER)
+    # print('Password is: %s' % settings.OMERO_FORMS_PRIV_PASSWORD)
+
+    # Test: Create a super user connection
+    # su_conn = conn.clone()
+    # su_conn.setIdentity(
+    #     settings.OMERO_FORMS_PRIV_USER,
+    #     settings.OMERO_FORMS_PRIV_PASSWORD
+    # )
+    # if not su_conn.connect():
+    #     print('Not Connected')
+    #check su function
 
     return HttpJsonResponse(
         {
