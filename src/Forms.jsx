@@ -10,16 +10,7 @@ export default class Forms extends React.Component {
     super();
 
     this.state = {
-      form: {
-        title: "Science stuff",
-        type: "object",
-        required: ["project", "someNumber"],
-        properties: {
-          project: {type: "string", title: "Project"},
-          something: {type: "boolean", title: "Something?", default: false},
-          someNumber: {"type": "number", "title": "Some number"}
-        }
-      },
+      forms: [],
       formData: {
         project: "Mega science thing",
         something: true,
@@ -49,7 +40,16 @@ export default class Forms extends React.Component {
     });
 
     loadRequest.done(jsonData => {
-      console.log('DONE');
+      console.log(jsonData);
+
+      let forms = jsonData.forms.map(formString => JSON.parse(formString));
+      console.log(forms);
+
+      this.setState({
+        forms: forms
+      });
+
+      console.log(jsonData);
     });
   }
 
@@ -58,13 +58,18 @@ export default class Forms extends React.Component {
     console.log(formData);
   }
 
+  // formData={ this.state.formData }
   render() {
+
     return (
-      <Form
-        schema={ this.state.form }
-        formData={ this.state.formData }
-        onSubmit={ this.submitForm }
-      />
+      (
+        this.state.forms.length > 0 &&
+        <Form
+          schema={ this.state.forms[0] }
+
+          onSubmit={ this.submitForm }
+        />
+      )
     );
   }
 }

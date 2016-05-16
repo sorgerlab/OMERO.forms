@@ -83,6 +83,7 @@ def dataset_keys(request, conn=None, **kwargs):
     service_opts.setOmeroGroup(group_id)
 
     params.add('did', wrap(dataset_id))
+    # params.add('gid', wrap(group_id))
     params.add('oname', wrap(settings.OMERO_FORMS_PRIV_USER))
 
     qs = conn.getQueryService()
@@ -106,10 +107,46 @@ def dataset_keys(request, conn=None, **kwargs):
         anno = e[0].val
         kvs = {}
         for pair in anno.getMapValue():
-            print '\t%s = %s' % (pair.name, pair.value)
+            # print '\t%s = %s' % (pair.name, pair.value)
             kvs[pair.name] = pair.value
         annotations.append(kvs)
 
+    # Get the forms available to users of this group
+    q = """
+        SELECT anno
+        FROM ExperimenterGroup grp
+        JOIN grp.annotationLinks links
+        JOIN links.child anno
+        JOIN anno.details details
+        WHERE anno.class = MapAnnotation
+        AND details.owner.omeName = :oname
+        """
+        # JOIN anno.mapValue mapValues
+        # AND mapValues.name = 'form_json'
+
+    forms = []
+    for e in qs.projection(q, params, service_opts):
+        anno = e[0].val
+        for pair in anno.getMapValue():
+            if pair.name == 'form_json':
+                forms.append(pair.value)
+
+    print forms
+
+    # form = """
+    # {
+    #     "title": "Science stuff",
+    #     "type": "object",
+    #     "required": ["project", "someNumber"],
+    #     "properties": {
+    #       "project": {"type": "string", "title": "Project"},
+    #       "something": {"type": "boolean", "title": "Something?", "default": false},
+    #       "someNumber": {"type": "number", "title": "Some number"}
+    #     }
+    # }
+    # """
+    #
+    # forms = [form]
 
     # print('User is: %s' % settings.OMERO_FORMS_PRIV_USER)
     # print('Password is: %s' % settings.OMERO_FORMS_PRIV_PASSWORD)
@@ -126,6 +163,7 @@ def dataset_keys(request, conn=None, **kwargs):
 
     return HttpJsonResponse(
         {
-            'annotations': annotations
+            'annotations': annotations,
+            'forms': forms
         }
     )

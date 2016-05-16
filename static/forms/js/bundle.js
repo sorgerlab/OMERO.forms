@@ -19741,16 +19741,7 @@ var omeroforms =
 	    var _this = (0, _possibleConstructorReturn3.default)(this, (0, _getPrototypeOf2.default)(Forms).call(this));
 
 	    _this.state = {
-	      form: {
-	        title: "Science stuff",
-	        type: "object",
-	        required: ["project", "someNumber"],
-	        properties: {
-	          project: { type: "string", title: "Project" },
-	          something: { type: "boolean", title: "Something?", default: false },
-	          someNumber: { "type": "number", "title": "Some number" }
-	        }
-	      },
+	      forms: [],
 	      formData: {
 	        project: "Mega science thing",
 	        something: true,
@@ -19772,6 +19763,7 @@ var omeroforms =
 	  }, {
 	    key: 'loadFromServer',
 	    value: function loadFromServer(datasetId, groupId) {
+	      var _this2 = this;
 
 	      console.log('Loading from server');
 
@@ -19784,7 +19776,18 @@ var omeroforms =
 	      });
 
 	      loadRequest.done(function (jsonData) {
-	        console.log('DONE');
+	        console.log(jsonData);
+
+	        var forms = jsonData.forms.map(function (formString) {
+	          return JSON.parse(formString);
+	        });
+	        console.log(forms);
+
+	        _this2.setState({
+	          forms: forms
+	        });
+
+	        console.log(jsonData);
 	      });
 	    }
 	  }, {
@@ -19793,12 +19796,16 @@ var omeroforms =
 	      console.log('submitform');
 	      console.log(formData);
 	    }
+
+	    // formData={ this.state.formData }
+
 	  }, {
 	    key: 'render',
 	    value: function render() {
-	      return _react2.default.createElement(_reactJsonschemaForm2.default, {
-	        schema: this.state.form,
-	        formData: this.state.formData,
+
+	      return this.state.forms.length > 0 && _react2.default.createElement(_reactJsonschemaForm2.default, {
+	        schema: this.state.forms[0],
+
 	        onSubmit: this.submitForm
 	      });
 	    }
