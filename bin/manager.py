@@ -104,10 +104,13 @@ def editForm(anno_id, form, group_id=-1):
 
     qs = conn.getQueryService()
     q = """
-        SELECT anno
-        FROM MapAnnotation anno
+        SELECT anno, grp
+        FROM ExperimenterGroup grp
+        JOIN grp.annotationLinks links
+        JOIN links.child anno
         JOIN anno.details details
-        WHERE anno.id = :aid
+        WHERE anno.class = MapAnnotation
+        AND anno.id = :aid
         AND details.owner.omeName = :oname
         """
 
@@ -116,6 +119,11 @@ def editForm(anno_id, form, group_id=-1):
 
     form_json = None
     form_id = None
+
+    if group_id == -1:
+        service_opts.setOmeroGroup(rows[0][1].val.id.val)
+    else:
+        assert group_id == rows[0][1].val.id.val
 
     anno = rows[0][0].val
     for pair in anno.getMapValue():
@@ -230,7 +238,7 @@ form1 = """
 
 form2 = """
 {
-    "title": "44444444",
+    "title": "77777",
     "type": "object",
     "required": ["project", "someNumber"],
     "properties": {
@@ -248,6 +256,7 @@ listForms(203)
 # listDatasets(103)
 # listGroups()
 # addOther(251)
+# editForm(412, form2)
 # editForm(412, form2, 203)
 # listAllMapAnnotations()
 # deleteOther(410)
