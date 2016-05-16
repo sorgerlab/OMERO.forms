@@ -96,32 +96,6 @@ def listAllMapAnnotations(group_id=-1):
 
 def editForm(anno_id, form, group_id=-1):
 
-    # # TODO As using direct save method, need to set the SERVICE_OPTS directly
-    conn.SERVICE_OPTS.setOmeroGroup(group_id)
-
-    # print(dir(conn))
-    # anno_links = list(conn.getAnnotationLinks('ExperimenterGroup',
-    #                                           ann_ids=[anno_id]))
-    #
-    # assert len(anno_links) == 1
-    #
-    # anno = anno_links[0].child
-    # print anno.getNs().val
-    # for pair in anno._mapValue:
-    #     print pair.name
-    #     print pair.value
-    #
-    # keyValueData = [
-    #     ["form_json", 'xyxyxyxyxyx'],
-    #     ["form_id", 1234567]
-    # ]
-    #
-    # anno.setValue(keyValueData)
-
-    # ms = conn.getMetadataService()
-    # annos = ms.loadAnnotation([anno_id])
-    # print annos
-
     params = omero.sys.ParametersI()
     params.add('oname', omero.rtypes.wrap('formmaster'))
     params.add('aid', omero.rtypes.wrap(long(anno_id)))
@@ -153,37 +127,17 @@ def editForm(anno_id, form, group_id=-1):
     assert form_json is not None
     assert form_id is not None
 
-    # print anno.getMapValue()
+    keyValueData = [
+        ["form_json", form],
+        ["form_id", form_id]
+    ]
 
-    val = [['x', 'y'], ['a', 'b']]
-    data = [omero.model.NamedValue(d[0], d[1]) for d in val]
+    keyValueData = [omero.model.NamedValue(d[0], d[1]) for d in keyValueData]
 
-    anno.setMapValue(data)
-
-    # print '---'
-    # print anno.getMapValue()
+    anno.setMapValue(keyValueData)
 
     us = conn.getUpdateService()
-    n = us.saveAndReturnObject(anno, service_opts)
-    print n
-
-    # print anno.getMapValue()
-
-    # mv = anno.getMapValue()
-    # anno.setMapValue([])
-
-    # # TODO As using direct save method, need to set the SERVICE_OPTS directly
-    # conn.SERVICE_OPTS.setOmeroGroup(group_id)
-    #
-    # keyValueData = [
-    #     ["form_json", form],
-    #     ["form_id", form_id]
-    # ]
-    # mapAnn = omero.gateway.MapAnnotationWrapper(conn, anno_id)
-    # namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
-    # mapAnn.setNs(namespace)
-    # mapAnn.setValue(keyValueData)
-    # mapAnn.save()
+    us.saveObject(anno, service_opts)
 
 
 def listDatasets(group_id=-1):
@@ -261,7 +215,7 @@ def deleteOther(anno_id):
     cb.close(True)
 
 # Add a key-value to the group
-form = """
+form1 = """
 {
     "title": "Science stuff",
     "type": "object",
@@ -274,14 +228,27 @@ form = """
 }
 """
 
+form2 = """
+{
+    "title": "44444444",
+    "type": "object",
+    "required": ["project", "someNumber"],
+    "properties": {
+      "project": {"type": "string", "title": "Project2"},
+      "something": {"type": "boolean", "title": "Some222", "default": false},
+      "someNumber": {"type": "number", "title": "Some 222"}
+    }
+}
+"""
+
 # listForms()
-# listForms(203)
-# addForm(form, "science_stuff1", 203)
+listForms(203)
+# addForm(form1, "science_stuff1", 203)
 # deleteForm(409)
 # listDatasets(103)
 # listGroups()
 # addOther(251)
-# editForm(412, form, 203)
+# editForm(412, form2, 203)
 # listAllMapAnnotations()
 # deleteOther(410)
 # deleteOther(411)
