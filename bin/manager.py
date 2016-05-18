@@ -14,6 +14,7 @@ def addForm(form, form_id, group_id):
     # TODO As using direct save method, need to set the SERVICE_OPTS directly
     conn.SERVICE_OPTS.setOmeroGroup(group_id)
 
+    # TODO Ensure that there is no other form with this ID?
     keyValueData = [
         ["form_json", form],
         ["form_id", form_id]
@@ -92,6 +93,33 @@ def listAllMapAnnotations(group_id=-1):
         for pair in anno.getMapValue():
             print('ID: %i Key: %s' % (anno.id.val, pair.name))
             print(pair.value)
+
+
+def listAllMapAnnotationsOnDataset(dataset_id, group_id=-1):
+    params = omero.sys.ParametersI()
+    # params.add('oname', omero.rtypes.wrap('formmaster'))
+    params.add('did', omero.rtypes.wrap(long(dataset_id)))
+    service_opts = deepcopy(conn.SERVICE_OPTS)
+    service_opts.setOmeroGroup(group_id)
+
+    qs = conn.getQueryService()
+    q = """
+        SELECT anno
+        FROM Dataset dataset
+        JOIN dataset.annotationLinks links
+        JOIN links.child anno
+        WHERE anno.class = MapAnnotation
+        AND dataset.id = :did
+
+        """
+    # JOIN anno.details details
+    # AND details.owner.omeName = :oname
+
+    for e in qs.projection(q, params, service_opts):
+        anno = e[0].val
+        for pair in anno.getMapValue():
+            print('\tID: %i Key: %s - %s' % (anno.id.val, pair.name,
+                                             pair.value))
 
 
 def editForm(anno_id, form, group_id=-1):
@@ -222,6 +250,41 @@ def deleteOther(anno_id):
         print cb.getResponse()
     cb.close(True)
 
+
+def getFormData(dataset_id, form_id, group_id=-1):
+
+    service_opts = deepcopy(conn.SERVICE_OPTS)
+    service_opts.setOmeroGroup(group_id)
+
+    params = omero.sys.ParametersI()
+    # TODO Change to 'formmaster'
+    params.add('oname', omero.rtypes.wrap('rou'))
+    params.add('did', omero.rtypes.wrap(long(dataset_id)))
+    params.add('fid', omero.rtypes.wrap(form_id))
+
+
+    qs = conn.getQueryService()
+    q = """
+        SELECT mapValue.value, anno
+        FROM Dataset dataset
+        JOIN dataset.annotationLinks links
+        JOIN links.child anno
+        JOIN anno.details details
+        JOIN anno.mapValue mapValue
+        WHERE anno.class = MapAnnotation
+        AND dataset.id = :did
+        AND details.owner.omeName = :oname
+        AND mapValue.name = 'form_id'
+        AND mapValue.value = :fid
+        """
+
+    rows = qs.projection(q, params, service_opts)
+
+    for row in rows:
+        mv = row[0]
+        anno = row[1]
+        print mv.val, '\t', anno.val.id.val
+
 # Add a key-value to the group
 form1 = """
 {
@@ -238,26 +301,26 @@ form1 = """
 
 form2 = """
 {
-    "title": "77777",
+    "title": "Second form",
     "type": "object",
-    "required": ["project", "someNumber"],
+    "required": ["project"],
     "properties": {
-      "project": {"type": "string", "title": "Project2"},
-      "something": {"type": "boolean", "title": "Some222", "default": false},
-      "someNumber": {"type": "number", "title": "Some 222"}
+      "project": {"type": "string", "title": "Project2"}
     }
 }
 """
 
 # listForms()
-listForms(203)
+# listForms(203)
 # addForm(form1, "science_stuff1", 203)
-# deleteForm(409)
+# addForm(form2, "second_form", 203)
+# deleteForm(420)
 # listDatasets(103)
 # listGroups()
 # addOther(251)
 # editForm(412, form2)
 # editForm(412, form2, 203)
 # listAllMapAnnotations()
-# deleteOther(410)
-# deleteOther(411)
+# deleteOther(421)
+# getFormData(251, "science_stuff1", 203)
+listAllMapAnnotationsOnDataset(251, 203)

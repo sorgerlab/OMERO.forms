@@ -8,6 +8,7 @@ import omero
 from omero.rtypes import rstring, rlong, wrap, unwrap
 
 from copy import deepcopy
+import datetime
 
 from omeroweb.webclient import tree
 
@@ -17,12 +18,64 @@ import logging
 logger = logging.getLogger(__name__)
 
 from . import settings
+from . import utils
 
 @login_required(setGroupContext=True)
 def update(request, conn=None, **kwargs):
 
     if not request.POST:
         return HttpResponseNotAllowed('Methods allowed: POST')
+
+    update_data = json.loads(request.body)
+
+    print update_data
+
+    form_id = update_data['formId']
+    form_data = update_data['formData']
+    object_id = update_data['datasetId']
+    changed_at = datetime.datetime.now()
+    changed_by = conn.user.getName()
+
+
+    group_id = request.session.get('active_group')
+    if group_id is None:
+        group_id = conn.getEventContext().groupId
+
+    # print form_id
+    # print form_data
+    # print changed_at
+    # print changed_by
+    # print group_id
+
+    # print type(form_data)
+
+    # Create a super user connection
+    su_conn = conn.clone()
+    su_conn.setIdentity(
+        settings.OMERO_FORMS_PRIV_USER,
+        settings.OMERO_FORMS_PRIV_PASSWORD
+    )
+    su_conn.connect()
+
+    # TODO As using direct save method, need to set the SERVICE_OPTS directly
+    su_conn.SERVICE_OPTS.setOmeroGroup(group_id)
+
+    utils.addOrUpdateObjectMapAnnotation(su_conn, 'Dataset', object_id,
+                                         form_id, form_data)
+
+    # TODO Check that the form submitted is valid for the group it is being
+    # submitted for
+
+    # TODO Check that the user is a member of the current group and that the
+    # dataset is in that group
+
+
+    # TODO Save the JSON form data to the history location, wherever that is
+    #   json-data
+    #   timestamp of change
+    #   author of change
+
+
 
     # images = json.loads(request.body)
     #
@@ -127,9 +180,19 @@ def dataset_keys(request, conn=None, **kwargs):
     forms = []
     for e in qs.projection(q, params, service_opts):
         anno = e[0].val
+        form_json = None
+        form_id = None
         for pair in anno.getMapValue():
             if pair.name == 'form_json':
-                forms.append(pair.value)
+                form_json = pair.value
+            if pair.name == 'form_id':
+                form_id = pair.value
+
+        if form_json is not None and form_id is not None:
+            forms.append({
+                'form_id': form_id,
+                'form_json': form_json
+            })
 
     print forms
 

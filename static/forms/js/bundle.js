@@ -19698,6 +19698,10 @@ var omeroforms =
 	  value: true
 	});
 
+	var _stringify = __webpack_require__(294);
+
+	var _stringify2 = _interopRequireDefault(_stringify);
+
 	var _getPrototypeOf = __webpack_require__(161);
 
 	var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
@@ -19741,17 +19745,18 @@ var omeroforms =
 	    var _this = (0, _possibleConstructorReturn3.default)(this, (0, _getPrototypeOf2.default)(Forms).call(this));
 
 	    _this.state = {
-	      forms: [],
+	      forms: {},
 	      formData: {
 	        project: "Mega science thing",
 	        something: true,
 	        someNumber: 500
 	      },
-	      activeForm: undefined
+	      activeFormId: undefined
 	    };
 
 	    _this.submitForm = _this.submitForm.bind(_this);
 	    _this.loadFromServer = _this.loadFromServer.bind(_this);
+	    _this.switchForm = _this.switchForm.bind(_this);
 	    return _this;
 	  }
 
@@ -19778,23 +19783,64 @@ var omeroforms =
 	      loadRequest.done(function (jsonData) {
 	        console.log(jsonData);
 
-	        var forms = jsonData.forms.map(function (formString) {
-	          return JSON.parse(formString);
+	        var forms = {};
+	        jsonData.forms.forEach(function (form) {
+	          forms[form.form_id] = {
+	            form_id: form.form_id,
+	            form_schema: JSON.parse(form.form_json)
+	          };
 	        });
-	        console.log(forms);
+
+	        var activeFormId = undefined;
+	        if (jsonData.forms.length == 1) {
+	          activeFormId = jsonData.forms[0].form_id;
+	        }
 
 	        _this2.setState({
-	          forms: forms
+	          forms: forms,
+	          activeFormId: activeFormId
 	        });
-
-	        console.log(jsonData);
 	      });
 	    }
 	  }, {
 	    key: 'submitForm',
-	    value: function submitForm(formData) {
+	    value: function submitForm(formDataSubmission) {
 	      console.log('submitform');
-	      console.log(formData);
+	      console.log(formDataSubmission);
+
+	      var updateForm = {
+	        'formData': formDataSubmission.formData,
+	        'formId': this.state.activeFormId,
+	        'datasetId': this.props.datasetId
+	      };
+
+	      // Take the form data, submit this to django
+	      $.ajax({
+	        url: this.props.urlUpdate,
+	        type: "POST",
+	        data: (0, _stringify2.default)(updateForm),
+	        success: function (data) {
+	          // No action required
+	        }.bind(this),
+	        error: function (xhr, status, err) {
+	          console.error(this.props.url, status, err.toString());
+
+	          // TODO Pop up a warning dialog
+
+	          // Completely reload as the state could have been partially updated
+	          // or failed for complex reasons due to updates outside of the scope
+	          // of autotag
+	          // this.refreshForm();
+	        }.bind(this)
+	      });
+	    }
+	  }, {
+	    key: 'switchForm',
+	    value: function switchForm(key) {
+
+	      this.setState({
+	        activeFormId: key
+	      });
 	    }
 
 	    // formData={ this.state.formData }
@@ -19803,11 +19849,42 @@ var omeroforms =
 	    key: 'render',
 	    value: function render() {
 
-	      return this.state.forms.length > 0 && _react2.default.createElement(_reactJsonschemaForm2.default, {
-	        schema: this.state.forms[0],
+	      // If there is a single form which has previously been filled then
+	      // display that form directly.
+	      // Also, if there is only a single form for a group, display it directly
 
-	        onSubmit: this.submitForm
-	      });
+	      var formChoices = [];
+	      for (var key in this.state.forms) {
+	        if (this.state.forms.hasOwnProperty(key)) {
+	          formChoices.push(_react2.default.createElement(
+	            'li',
+	            { key: key, onClick: this.switchForm.bind(this, key) },
+	            key
+	          ));
+	        }
+	      }
+
+	      var form = void 0;
+	      if (this.state.activeFormId !== undefined) {
+	        var activeForm = this.state.forms[this.state.activeFormId];
+
+	        form = _react2.default.createElement(_reactJsonschemaForm2.default, {
+	          schema: activeForm.form_schema,
+
+	          onSubmit: this.submitForm
+	        });
+	      }
+
+	      return _react2.default.createElement(
+	        'div',
+	        null,
+	        _react2.default.createElement(
+	          'ul',
+	          null,
+	          formChoices
+	        ),
+	        form
+	      );
 	    }
 	  }]);
 	  return Forms;
@@ -29465,6 +29542,22 @@ var omeroforms =
 		return a.map(function(v){ return '/'+encodeURIComponent(v).replace(/~/g,'%7E'); }).join('');
 	};
 
+
+/***/ },
+/* 294 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(295), __esModule: true };
+
+/***/ },
+/* 295 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var core  = __webpack_require__(174)
+	  , $JSON = core.JSON || (core.JSON = {stringify: JSON.stringify});
+	module.exports = function stringify(it){ // eslint-disable-line no-unused-vars
+	  return $JSON.stringify.apply($JSON, arguments);
+	};
 
 /***/ }
 /******/ ]);
