@@ -19698,27 +19698,27 @@ var omeroforms =
 	  value: true
 	});
 
-	var _stringify = __webpack_require__(294);
+	var _stringify = __webpack_require__(161);
 
 	var _stringify2 = _interopRequireDefault(_stringify);
 
-	var _getPrototypeOf = __webpack_require__(161);
+	var _getPrototypeOf = __webpack_require__(164);
 
 	var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
 
-	var _classCallCheck2 = __webpack_require__(187);
+	var _classCallCheck2 = __webpack_require__(189);
 
 	var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 
-	var _createClass2 = __webpack_require__(188);
+	var _createClass2 = __webpack_require__(190);
 
 	var _createClass3 = _interopRequireDefault(_createClass2);
 
-	var _possibleConstructorReturn2 = __webpack_require__(192);
+	var _possibleConstructorReturn2 = __webpack_require__(194);
 
 	var _possibleConstructorReturn3 = _interopRequireDefault(_possibleConstructorReturn2);
 
-	var _inherits2 = __webpack_require__(239);
+	var _inherits2 = __webpack_require__(241);
 
 	var _inherits3 = _interopRequireDefault(_inherits2);
 
@@ -19730,7 +19730,7 @@ var omeroforms =
 
 	var _reactDom2 = _interopRequireDefault(_reactDom);
 
-	var _reactJsonschemaForm = __webpack_require__(247);
+	var _reactJsonschemaForm = __webpack_require__(249);
 
 	var _reactJsonschemaForm2 = _interopRequireDefault(_reactJsonschemaForm);
 
@@ -19902,35 +19902,58 @@ var omeroforms =
 /* 162 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(163);
-	module.exports = __webpack_require__(174).Object.getPrototypeOf;
+	var core  = __webpack_require__(163)
+	  , $JSON = core.JSON || (core.JSON = {stringify: JSON.stringify});
+	module.exports = function stringify(it){ // eslint-disable-line no-unused-vars
+	  return $JSON.stringify.apply($JSON, arguments);
+	};
 
 /***/ },
 /* 163 */
+/***/ function(module, exports) {
+
+	var core = module.exports = {version: '2.4.0'};
+	if(typeof __e == 'number')__e = core; // eslint-disable-line no-undef
+
+/***/ },
+/* 164 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(165), __esModule: true };
+
+/***/ },
+/* 165 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(166);
+	module.exports = __webpack_require__(163).Object.getPrototypeOf;
+
+/***/ },
+/* 166 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 19.1.2.9 Object.getPrototypeOf(O)
-	var toObject        = __webpack_require__(164)
-	  , $getPrototypeOf = __webpack_require__(166);
+	var toObject        = __webpack_require__(167)
+	  , $getPrototypeOf = __webpack_require__(169);
 
-	__webpack_require__(172)('getPrototypeOf', function(){
+	__webpack_require__(175)('getPrototypeOf', function(){
 	  return function getPrototypeOf(it){
 	    return $getPrototypeOf(toObject(it));
 	  };
 	});
 
 /***/ },
-/* 164 */
+/* 167 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 7.1.13 ToObject(argument)
-	var defined = __webpack_require__(165);
+	var defined = __webpack_require__(168);
 	module.exports = function(it){
 	  return Object(defined(it));
 	};
 
 /***/ },
-/* 165 */
+/* 168 */
 /***/ function(module, exports) {
 
 	// 7.2.1 RequireObjectCoercible(argument)
@@ -19940,13 +19963,13 @@ var omeroforms =
 	};
 
 /***/ },
-/* 166 */
+/* 169 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 19.1.2.9 / 15.2.3.2 Object.getPrototypeOf(O)
-	var has         = __webpack_require__(167)
-	  , toObject    = __webpack_require__(164)
-	  , IE_PROTO    = __webpack_require__(168)('IE_PROTO')
+	var has         = __webpack_require__(170)
+	  , toObject    = __webpack_require__(167)
+	  , IE_PROTO    = __webpack_require__(171)('IE_PROTO')
 	  , ObjectProto = Object.prototype;
 
 	module.exports = Object.getPrototypeOf || function(O){
@@ -19958,7 +19981,7 @@ var omeroforms =
 	};
 
 /***/ },
-/* 167 */
+/* 170 */
 /***/ function(module, exports) {
 
 	var hasOwnProperty = {}.hasOwnProperty;
@@ -19967,20 +19990,20 @@ var omeroforms =
 	};
 
 /***/ },
-/* 168 */
+/* 171 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var shared = __webpack_require__(169)('keys')
-	  , uid    = __webpack_require__(171);
+	var shared = __webpack_require__(172)('keys')
+	  , uid    = __webpack_require__(174);
 	module.exports = function(key){
 	  return shared[key] || (shared[key] = uid(key));
 	};
 
 /***/ },
-/* 169 */
+/* 172 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var global = __webpack_require__(170)
+	var global = __webpack_require__(173)
 	  , SHARED = '__core-js_shared__'
 	  , store  = global[SHARED] || (global[SHARED] = {});
 	module.exports = function(key){
@@ -19988,7 +20011,7 @@ var omeroforms =
 	};
 
 /***/ },
-/* 170 */
+/* 173 */
 /***/ function(module, exports) {
 
 	// https://github.com/zloirock/core-js/issues/86#issuecomment-115759028
@@ -19997,7 +20020,7 @@ var omeroforms =
 	if(typeof __g == 'number')__g = global; // eslint-disable-line no-undef
 
 /***/ },
-/* 171 */
+/* 174 */
 /***/ function(module, exports) {
 
 	var id = 0
@@ -20007,13 +20030,13 @@ var omeroforms =
 	};
 
 /***/ },
-/* 172 */
+/* 175 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// most Object methods by ES6 should accept primitives
-	var $export = __webpack_require__(173)
-	  , core    = __webpack_require__(174)
-	  , fails   = __webpack_require__(183);
+	var $export = __webpack_require__(176)
+	  , core    = __webpack_require__(163)
+	  , fails   = __webpack_require__(185);
 	module.exports = function(KEY, exec){
 	  var fn  = (core.Object || {})[KEY] || Object[KEY]
 	    , exp = {};
@@ -20022,13 +20045,13 @@ var omeroforms =
 	};
 
 /***/ },
-/* 173 */
+/* 176 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var global    = __webpack_require__(170)
-	  , core      = __webpack_require__(174)
-	  , ctx       = __webpack_require__(175)
-	  , hide      = __webpack_require__(177)
+	var global    = __webpack_require__(173)
+	  , core      = __webpack_require__(163)
+	  , ctx       = __webpack_require__(177)
+	  , hide      = __webpack_require__(179)
 	  , PROTOTYPE = 'prototype';
 
 	var $export = function(type, name, source){
@@ -20088,18 +20111,11 @@ var omeroforms =
 	module.exports = $export;
 
 /***/ },
-/* 174 */
-/***/ function(module, exports) {
-
-	var core = module.exports = {version: '2.4.0'};
-	if(typeof __e == 'number')__e = core; // eslint-disable-line no-undef
-
-/***/ },
-/* 175 */
+/* 177 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// optional / simple context binding
-	var aFunction = __webpack_require__(176);
+	var aFunction = __webpack_require__(178);
 	module.exports = function(fn, that, length){
 	  aFunction(fn);
 	  if(that === undefined)return fn;
@@ -20120,7 +20136,7 @@ var omeroforms =
 	};
 
 /***/ },
-/* 176 */
+/* 178 */
 /***/ function(module, exports) {
 
 	module.exports = function(it){
@@ -20129,12 +20145,12 @@ var omeroforms =
 	};
 
 /***/ },
-/* 177 */
+/* 179 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var dP         = __webpack_require__(178)
-	  , createDesc = __webpack_require__(186);
-	module.exports = __webpack_require__(182) ? function(object, key, value){
+	var dP         = __webpack_require__(180)
+	  , createDesc = __webpack_require__(188);
+	module.exports = __webpack_require__(184) ? function(object, key, value){
 	  return dP.f(object, key, createDesc(1, value));
 	} : function(object, key, value){
 	  object[key] = value;
@@ -20142,15 +20158,15 @@ var omeroforms =
 	};
 
 /***/ },
-/* 178 */
+/* 180 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var anObject       = __webpack_require__(179)
-	  , IE8_DOM_DEFINE = __webpack_require__(181)
-	  , toPrimitive    = __webpack_require__(185)
+	var anObject       = __webpack_require__(181)
+	  , IE8_DOM_DEFINE = __webpack_require__(183)
+	  , toPrimitive    = __webpack_require__(187)
 	  , dP             = Object.defineProperty;
 
-	exports.f = __webpack_require__(182) ? Object.defineProperty : function defineProperty(O, P, Attributes){
+	exports.f = __webpack_require__(184) ? Object.defineProperty : function defineProperty(O, P, Attributes){
 	  anObject(O);
 	  P = toPrimitive(P, true);
 	  anObject(Attributes);
@@ -20163,17 +20179,17 @@ var omeroforms =
 	};
 
 /***/ },
-/* 179 */
+/* 181 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isObject = __webpack_require__(180);
+	var isObject = __webpack_require__(182);
 	module.exports = function(it){
 	  if(!isObject(it))throw TypeError(it + ' is not an object!');
 	  return it;
 	};
 
 /***/ },
-/* 180 */
+/* 182 */
 /***/ function(module, exports) {
 
 	module.exports = function(it){
@@ -20181,24 +20197,24 @@ var omeroforms =
 	};
 
 /***/ },
-/* 181 */
+/* 183 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = !__webpack_require__(182) && !__webpack_require__(183)(function(){
-	  return Object.defineProperty(__webpack_require__(184)('div'), 'a', {get: function(){ return 7; }}).a != 7;
+	module.exports = !__webpack_require__(184) && !__webpack_require__(185)(function(){
+	  return Object.defineProperty(__webpack_require__(186)('div'), 'a', {get: function(){ return 7; }}).a != 7;
 	});
 
 /***/ },
-/* 182 */
+/* 184 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Thank's IE8 for his funny defineProperty
-	module.exports = !__webpack_require__(183)(function(){
+	module.exports = !__webpack_require__(185)(function(){
 	  return Object.defineProperty({}, 'a', {get: function(){ return 7; }}).a != 7;
 	});
 
 /***/ },
-/* 183 */
+/* 185 */
 /***/ function(module, exports) {
 
 	module.exports = function(exec){
@@ -20210,11 +20226,11 @@ var omeroforms =
 	};
 
 /***/ },
-/* 184 */
+/* 186 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isObject = __webpack_require__(180)
-	  , document = __webpack_require__(170).document
+	var isObject = __webpack_require__(182)
+	  , document = __webpack_require__(173).document
 	  // in old IE typeof document.createElement is 'object'
 	  , is = isObject(document) && isObject(document.createElement);
 	module.exports = function(it){
@@ -20222,11 +20238,11 @@ var omeroforms =
 	};
 
 /***/ },
-/* 185 */
+/* 187 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 7.1.1 ToPrimitive(input [, PreferredType])
-	var isObject = __webpack_require__(180);
+	var isObject = __webpack_require__(182);
 	// instead of the ES6 spec version, we didn't implement @@toPrimitive case
 	// and the second argument - flag - preferred type is a string
 	module.exports = function(it, S){
@@ -20239,7 +20255,7 @@ var omeroforms =
 	};
 
 /***/ },
-/* 186 */
+/* 188 */
 /***/ function(module, exports) {
 
 	module.exports = function(bitmap, value){
@@ -20252,7 +20268,7 @@ var omeroforms =
 	};
 
 /***/ },
-/* 187 */
+/* 189 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -20266,14 +20282,14 @@ var omeroforms =
 	};
 
 /***/ },
-/* 188 */
+/* 190 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	exports.__esModule = true;
 
-	var _defineProperty = __webpack_require__(189);
+	var _defineProperty = __webpack_require__(191);
 
 	var _defineProperty2 = _interopRequireDefault(_defineProperty);
 
@@ -20298,38 +20314,38 @@ var omeroforms =
 	}();
 
 /***/ },
-/* 189 */
+/* 191 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = { "default": __webpack_require__(190), __esModule: true };
+	module.exports = { "default": __webpack_require__(192), __esModule: true };
 
 /***/ },
-/* 190 */
+/* 192 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(191);
-	var $Object = __webpack_require__(174).Object;
+	__webpack_require__(193);
+	var $Object = __webpack_require__(163).Object;
 	module.exports = function defineProperty(it, key, desc){
 	  return $Object.defineProperty(it, key, desc);
 	};
 
 /***/ },
-/* 191 */
+/* 193 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var $export = __webpack_require__(173);
+	var $export = __webpack_require__(176);
 	// 19.1.2.4 / 15.2.3.6 Object.defineProperty(O, P, Attributes)
-	$export($export.S + $export.F * !__webpack_require__(182), 'Object', {defineProperty: __webpack_require__(178).f});
+	$export($export.S + $export.F * !__webpack_require__(184), 'Object', {defineProperty: __webpack_require__(180).f});
 
 /***/ },
-/* 192 */
+/* 194 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	exports.__esModule = true;
 
-	var _typeof2 = __webpack_require__(193);
+	var _typeof2 = __webpack_require__(195);
 
 	var _typeof3 = _interopRequireDefault(_typeof2);
 
@@ -20344,18 +20360,18 @@ var omeroforms =
 	};
 
 /***/ },
-/* 193 */
+/* 195 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	exports.__esModule = true;
 
-	var _iterator = __webpack_require__(194);
+	var _iterator = __webpack_require__(196);
 
 	var _iterator2 = _interopRequireDefault(_iterator);
 
-	var _symbol = __webpack_require__(223);
+	var _symbol = __webpack_require__(225);
 
 	var _symbol2 = _interopRequireDefault(_symbol);
 
@@ -20370,28 +20386,28 @@ var omeroforms =
 	};
 
 /***/ },
-/* 194 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = { "default": __webpack_require__(195), __esModule: true };
-
-/***/ },
-/* 195 */
-/***/ function(module, exports, __webpack_require__) {
-
-	__webpack_require__(196);
-	__webpack_require__(218);
-	module.exports = __webpack_require__(222).f('iterator');
-
-/***/ },
 /* 196 */
 /***/ function(module, exports, __webpack_require__) {
 
+	module.exports = { "default": __webpack_require__(197), __esModule: true };
+
+/***/ },
+/* 197 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(198);
+	__webpack_require__(220);
+	module.exports = __webpack_require__(224).f('iterator');
+
+/***/ },
+/* 198 */
+/***/ function(module, exports, __webpack_require__) {
+
 	'use strict';
-	var $at  = __webpack_require__(197)(true);
+	var $at  = __webpack_require__(199)(true);
 
 	// 21.1.3.27 String.prototype[@@iterator]()
-	__webpack_require__(199)(String, 'String', function(iterated){
+	__webpack_require__(201)(String, 'String', function(iterated){
 	  this._t = String(iterated); // target
 	  this._i = 0;                // next index
 	// 21.1.5.2.1 %StringIteratorPrototype%.next()
@@ -20406,11 +20422,11 @@ var omeroforms =
 	});
 
 /***/ },
-/* 197 */
+/* 199 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var toInteger = __webpack_require__(198)
-	  , defined   = __webpack_require__(165);
+	var toInteger = __webpack_require__(200)
+	  , defined   = __webpack_require__(168);
 	// true  -> String#at
 	// false -> String#codePointAt
 	module.exports = function(TO_STRING){
@@ -20428,7 +20444,7 @@ var omeroforms =
 	};
 
 /***/ },
-/* 198 */
+/* 200 */
 /***/ function(module, exports) {
 
 	// 7.1.4 ToInteger
@@ -20439,20 +20455,20 @@ var omeroforms =
 	};
 
 /***/ },
-/* 199 */
+/* 201 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	var LIBRARY        = __webpack_require__(200)
-	  , $export        = __webpack_require__(173)
-	  , redefine       = __webpack_require__(201)
-	  , hide           = __webpack_require__(177)
-	  , has            = __webpack_require__(167)
-	  , Iterators      = __webpack_require__(202)
-	  , $iterCreate    = __webpack_require__(203)
-	  , setToStringTag = __webpack_require__(216)
-	  , getPrototypeOf = __webpack_require__(166)
-	  , ITERATOR       = __webpack_require__(217)('iterator')
+	var LIBRARY        = __webpack_require__(202)
+	  , $export        = __webpack_require__(176)
+	  , redefine       = __webpack_require__(203)
+	  , hide           = __webpack_require__(179)
+	  , has            = __webpack_require__(170)
+	  , Iterators      = __webpack_require__(204)
+	  , $iterCreate    = __webpack_require__(205)
+	  , setToStringTag = __webpack_require__(218)
+	  , getPrototypeOf = __webpack_require__(169)
+	  , ITERATOR       = __webpack_require__(219)('iterator')
 	  , BUGGY          = !([].keys && 'next' in [].keys()) // Safari has buggy iterators w/o `next`
 	  , FF_ITERATOR    = '@@iterator'
 	  , KEYS           = 'keys'
@@ -20514,35 +20530,35 @@ var omeroforms =
 	};
 
 /***/ },
-/* 200 */
+/* 202 */
 /***/ function(module, exports) {
 
 	module.exports = true;
 
 /***/ },
-/* 201 */
+/* 203 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(177);
+	module.exports = __webpack_require__(179);
 
 /***/ },
-/* 202 */
+/* 204 */
 /***/ function(module, exports) {
 
 	module.exports = {};
 
 /***/ },
-/* 203 */
+/* 205 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	var create         = __webpack_require__(204)
-	  , descriptor     = __webpack_require__(186)
-	  , setToStringTag = __webpack_require__(216)
+	var create         = __webpack_require__(206)
+	  , descriptor     = __webpack_require__(188)
+	  , setToStringTag = __webpack_require__(218)
 	  , IteratorPrototype = {};
 
 	// 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
-	__webpack_require__(177)(IteratorPrototype, __webpack_require__(217)('iterator'), function(){ return this; });
+	__webpack_require__(179)(IteratorPrototype, __webpack_require__(219)('iterator'), function(){ return this; });
 
 	module.exports = function(Constructor, NAME, next){
 	  Constructor.prototype = create(IteratorPrototype, {next: descriptor(1, next)});
@@ -20550,26 +20566,26 @@ var omeroforms =
 	};
 
 /***/ },
-/* 204 */
+/* 206 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
-	var anObject    = __webpack_require__(179)
-	  , dPs         = __webpack_require__(205)
-	  , enumBugKeys = __webpack_require__(214)
-	  , IE_PROTO    = __webpack_require__(168)('IE_PROTO')
+	var anObject    = __webpack_require__(181)
+	  , dPs         = __webpack_require__(207)
+	  , enumBugKeys = __webpack_require__(216)
+	  , IE_PROTO    = __webpack_require__(171)('IE_PROTO')
 	  , Empty       = function(){ /* empty */ }
 	  , PROTOTYPE   = 'prototype';
 
 	// Create object with fake `null` prototype: use iframe Object with cleared prototype
 	var createDict = function(){
 	  // Thrash, waste and sodomy: IE GC bug
-	  var iframe = __webpack_require__(184)('iframe')
+	  var iframe = __webpack_require__(186)('iframe')
 	    , i      = enumBugKeys.length
 	    , gt     = '>'
 	    , iframeDocument;
 	  iframe.style.display = 'none';
-	  __webpack_require__(215).appendChild(iframe);
+	  __webpack_require__(217).appendChild(iframe);
 	  iframe.src = 'javascript:'; // eslint-disable-line no-script-url
 	  // createDict = iframe.contentWindow.Object;
 	  // html.removeChild(iframe);
@@ -20595,14 +20611,14 @@ var omeroforms =
 	};
 
 /***/ },
-/* 205 */
+/* 207 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var dP       = __webpack_require__(178)
-	  , anObject = __webpack_require__(179)
-	  , getKeys  = __webpack_require__(206);
+	var dP       = __webpack_require__(180)
+	  , anObject = __webpack_require__(181)
+	  , getKeys  = __webpack_require__(208);
 
-	module.exports = __webpack_require__(182) ? Object.defineProperties : function defineProperties(O, Properties){
+	module.exports = __webpack_require__(184) ? Object.defineProperties : function defineProperties(O, Properties){
 	  anObject(O);
 	  var keys   = getKeys(Properties)
 	    , length = keys.length
@@ -20613,25 +20629,25 @@ var omeroforms =
 	};
 
 /***/ },
-/* 206 */
+/* 208 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 19.1.2.14 / 15.2.3.14 Object.keys(O)
-	var $keys       = __webpack_require__(207)
-	  , enumBugKeys = __webpack_require__(214);
+	var $keys       = __webpack_require__(209)
+	  , enumBugKeys = __webpack_require__(216);
 
 	module.exports = Object.keys || function keys(O){
 	  return $keys(O, enumBugKeys);
 	};
 
 /***/ },
-/* 207 */
+/* 209 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var has          = __webpack_require__(167)
-	  , toIObject    = __webpack_require__(208)
-	  , arrayIndexOf = __webpack_require__(211)(false)
-	  , IE_PROTO     = __webpack_require__(168)('IE_PROTO');
+	var has          = __webpack_require__(170)
+	  , toIObject    = __webpack_require__(210)
+	  , arrayIndexOf = __webpack_require__(213)(false)
+	  , IE_PROTO     = __webpack_require__(171)('IE_PROTO');
 
 	module.exports = function(object, names){
 	  var O      = toIObject(object)
@@ -20647,28 +20663,28 @@ var omeroforms =
 	};
 
 /***/ },
-/* 208 */
+/* 210 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// to indexed object, toObject with fallback for non-array-like ES3 strings
-	var IObject = __webpack_require__(209)
-	  , defined = __webpack_require__(165);
+	var IObject = __webpack_require__(211)
+	  , defined = __webpack_require__(168);
 	module.exports = function(it){
 	  return IObject(defined(it));
 	};
 
 /***/ },
-/* 209 */
+/* 211 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// fallback for non-array-like ES3 and non-enumerable old V8 strings
-	var cof = __webpack_require__(210);
+	var cof = __webpack_require__(212);
 	module.exports = Object('z').propertyIsEnumerable(0) ? Object : function(it){
 	  return cof(it) == 'String' ? it.split('') : Object(it);
 	};
 
 /***/ },
-/* 210 */
+/* 212 */
 /***/ function(module, exports) {
 
 	var toString = {}.toString;
@@ -20678,14 +20694,14 @@ var omeroforms =
 	};
 
 /***/ },
-/* 211 */
+/* 213 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// false -> Array#indexOf
 	// true  -> Array#includes
-	var toIObject = __webpack_require__(208)
-	  , toLength  = __webpack_require__(212)
-	  , toIndex   = __webpack_require__(213);
+	var toIObject = __webpack_require__(210)
+	  , toLength  = __webpack_require__(214)
+	  , toIndex   = __webpack_require__(215);
 	module.exports = function(IS_INCLUDES){
 	  return function($this, el, fromIndex){
 	    var O      = toIObject($this)
@@ -20704,21 +20720,21 @@ var omeroforms =
 	};
 
 /***/ },
-/* 212 */
+/* 214 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 7.1.15 ToLength
-	var toInteger = __webpack_require__(198)
+	var toInteger = __webpack_require__(200)
 	  , min       = Math.min;
 	module.exports = function(it){
 	  return it > 0 ? min(toInteger(it), 0x1fffffffffffff) : 0; // pow(2, 53) - 1 == 9007199254740991
 	};
 
 /***/ },
-/* 213 */
+/* 215 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var toInteger = __webpack_require__(198)
+	var toInteger = __webpack_require__(200)
 	  , max       = Math.max
 	  , min       = Math.min;
 	module.exports = function(index, length){
@@ -20727,7 +20743,7 @@ var omeroforms =
 	};
 
 /***/ },
-/* 214 */
+/* 216 */
 /***/ function(module, exports) {
 
 	// IE 8- don't enum bug keys
@@ -20736,30 +20752,30 @@ var omeroforms =
 	).split(',');
 
 /***/ },
-/* 215 */
+/* 217 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(170).document && document.documentElement;
+	module.exports = __webpack_require__(173).document && document.documentElement;
 
 /***/ },
-/* 216 */
+/* 218 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var def = __webpack_require__(178).f
-	  , has = __webpack_require__(167)
-	  , TAG = __webpack_require__(217)('toStringTag');
+	var def = __webpack_require__(180).f
+	  , has = __webpack_require__(170)
+	  , TAG = __webpack_require__(219)('toStringTag');
 
 	module.exports = function(it, tag, stat){
 	  if(it && !has(it = stat ? it : it.prototype, TAG))def(it, TAG, {configurable: true, value: tag});
 	};
 
 /***/ },
-/* 217 */
+/* 219 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var store      = __webpack_require__(169)('wks')
-	  , uid        = __webpack_require__(171)
-	  , Symbol     = __webpack_require__(170).Symbol
+	var store      = __webpack_require__(172)('wks')
+	  , uid        = __webpack_require__(174)
+	  , Symbol     = __webpack_require__(173).Symbol
 	  , USE_SYMBOL = typeof Symbol == 'function';
 
 	var $exports = module.exports = function(name){
@@ -20770,14 +20786,14 @@ var omeroforms =
 	$exports.store = store;
 
 /***/ },
-/* 218 */
+/* 220 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(219);
-	var global        = __webpack_require__(170)
-	  , hide          = __webpack_require__(177)
-	  , Iterators     = __webpack_require__(202)
-	  , TO_STRING_TAG = __webpack_require__(217)('toStringTag');
+	__webpack_require__(221);
+	var global        = __webpack_require__(173)
+	  , hide          = __webpack_require__(179)
+	  , Iterators     = __webpack_require__(204)
+	  , TO_STRING_TAG = __webpack_require__(219)('toStringTag');
 
 	for(var collections = ['NodeList', 'DOMTokenList', 'MediaList', 'StyleSheetList', 'CSSRuleList'], i = 0; i < 5; i++){
 	  var NAME       = collections[i]
@@ -20788,20 +20804,20 @@ var omeroforms =
 	}
 
 /***/ },
-/* 219 */
+/* 221 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	var addToUnscopables = __webpack_require__(220)
-	  , step             = __webpack_require__(221)
-	  , Iterators        = __webpack_require__(202)
-	  , toIObject        = __webpack_require__(208);
+	var addToUnscopables = __webpack_require__(222)
+	  , step             = __webpack_require__(223)
+	  , Iterators        = __webpack_require__(204)
+	  , toIObject        = __webpack_require__(210);
 
 	// 22.1.3.4 Array.prototype.entries()
 	// 22.1.3.13 Array.prototype.keys()
 	// 22.1.3.29 Array.prototype.values()
 	// 22.1.3.30 Array.prototype[@@iterator]()
-	module.exports = __webpack_require__(199)(Array, 'Array', function(iterated, kind){
+	module.exports = __webpack_require__(201)(Array, 'Array', function(iterated, kind){
 	  this._t = toIObject(iterated); // target
 	  this._i = 0;                   // next index
 	  this._k = kind;                // kind
@@ -20827,13 +20843,13 @@ var omeroforms =
 	addToUnscopables('entries');
 
 /***/ },
-/* 220 */
+/* 222 */
 /***/ function(module, exports) {
 
 	module.exports = function(){ /* empty */ };
 
 /***/ },
-/* 221 */
+/* 223 */
 /***/ function(module, exports) {
 
 	module.exports = function(done, value){
@@ -20841,58 +20857,58 @@ var omeroforms =
 	};
 
 /***/ },
-/* 222 */
-/***/ function(module, exports, __webpack_require__) {
-
-	exports.f = __webpack_require__(217);
-
-/***/ },
-/* 223 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = { "default": __webpack_require__(224), __esModule: true };
-
-/***/ },
 /* 224 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(225);
-	__webpack_require__(236);
-	__webpack_require__(237);
-	__webpack_require__(238);
-	module.exports = __webpack_require__(174).Symbol;
+	exports.f = __webpack_require__(219);
 
 /***/ },
 /* 225 */
 /***/ function(module, exports, __webpack_require__) {
 
+	module.exports = { "default": __webpack_require__(226), __esModule: true };
+
+/***/ },
+/* 226 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(227);
+	__webpack_require__(238);
+	__webpack_require__(239);
+	__webpack_require__(240);
+	module.exports = __webpack_require__(163).Symbol;
+
+/***/ },
+/* 227 */
+/***/ function(module, exports, __webpack_require__) {
+
 	'use strict';
 	// ECMAScript 6 symbols shim
-	var global         = __webpack_require__(170)
-	  , has            = __webpack_require__(167)
-	  , DESCRIPTORS    = __webpack_require__(182)
-	  , $export        = __webpack_require__(173)
-	  , redefine       = __webpack_require__(201)
-	  , META           = __webpack_require__(226).KEY
-	  , $fails         = __webpack_require__(183)
-	  , shared         = __webpack_require__(169)
-	  , setToStringTag = __webpack_require__(216)
-	  , uid            = __webpack_require__(171)
-	  , wks            = __webpack_require__(217)
-	  , wksExt         = __webpack_require__(222)
-	  , wksDefine      = __webpack_require__(227)
-	  , keyOf          = __webpack_require__(228)
-	  , enumKeys       = __webpack_require__(229)
-	  , isArray        = __webpack_require__(232)
-	  , anObject       = __webpack_require__(179)
-	  , toIObject      = __webpack_require__(208)
-	  , toPrimitive    = __webpack_require__(185)
-	  , createDesc     = __webpack_require__(186)
-	  , _create        = __webpack_require__(204)
-	  , gOPNExt        = __webpack_require__(233)
-	  , $GOPD          = __webpack_require__(235)
-	  , $DP            = __webpack_require__(178)
-	  , $keys          = __webpack_require__(206)
+	var global         = __webpack_require__(173)
+	  , has            = __webpack_require__(170)
+	  , DESCRIPTORS    = __webpack_require__(184)
+	  , $export        = __webpack_require__(176)
+	  , redefine       = __webpack_require__(203)
+	  , META           = __webpack_require__(228).KEY
+	  , $fails         = __webpack_require__(185)
+	  , shared         = __webpack_require__(172)
+	  , setToStringTag = __webpack_require__(218)
+	  , uid            = __webpack_require__(174)
+	  , wks            = __webpack_require__(219)
+	  , wksExt         = __webpack_require__(224)
+	  , wksDefine      = __webpack_require__(229)
+	  , keyOf          = __webpack_require__(230)
+	  , enumKeys       = __webpack_require__(231)
+	  , isArray        = __webpack_require__(234)
+	  , anObject       = __webpack_require__(181)
+	  , toIObject      = __webpack_require__(210)
+	  , toPrimitive    = __webpack_require__(187)
+	  , createDesc     = __webpack_require__(188)
+	  , _create        = __webpack_require__(206)
+	  , gOPNExt        = __webpack_require__(235)
+	  , $GOPD          = __webpack_require__(237)
+	  , $DP            = __webpack_require__(180)
+	  , $keys          = __webpack_require__(208)
 	  , gOPD           = $GOPD.f
 	  , dP             = $DP.f
 	  , gOPN           = gOPNExt.f
@@ -21015,11 +21031,11 @@ var omeroforms =
 
 	  $GOPD.f = $getOwnPropertyDescriptor;
 	  $DP.f   = $defineProperty;
-	  __webpack_require__(234).f = gOPNExt.f = $getOwnPropertyNames;
-	  __webpack_require__(231).f  = $propertyIsEnumerable;
-	  __webpack_require__(230).f = $getOwnPropertySymbols;
+	  __webpack_require__(236).f = gOPNExt.f = $getOwnPropertyNames;
+	  __webpack_require__(233).f  = $propertyIsEnumerable;
+	  __webpack_require__(232).f = $getOwnPropertySymbols;
 
-	  if(DESCRIPTORS && !__webpack_require__(200)){
+	  if(DESCRIPTORS && !__webpack_require__(202)){
 	    redefine(ObjectProto, 'propertyIsEnumerable', $propertyIsEnumerable, true);
 	  }
 
@@ -21094,7 +21110,7 @@ var omeroforms =
 	});
 
 	// 19.4.3.4 Symbol.prototype[@@toPrimitive](hint)
-	$Symbol[PROTOTYPE][TO_PRIMITIVE] || __webpack_require__(177)($Symbol[PROTOTYPE], TO_PRIMITIVE, $Symbol[PROTOTYPE].valueOf);
+	$Symbol[PROTOTYPE][TO_PRIMITIVE] || __webpack_require__(179)($Symbol[PROTOTYPE], TO_PRIMITIVE, $Symbol[PROTOTYPE].valueOf);
 	// 19.4.3.5 Symbol.prototype[@@toStringTag]
 	setToStringTag($Symbol, 'Symbol');
 	// 20.2.1.9 Math[@@toStringTag]
@@ -21103,18 +21119,18 @@ var omeroforms =
 	setToStringTag(global.JSON, 'JSON', true);
 
 /***/ },
-/* 226 */
+/* 228 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var META     = __webpack_require__(171)('meta')
-	  , isObject = __webpack_require__(180)
-	  , has      = __webpack_require__(167)
-	  , setDesc  = __webpack_require__(178).f
+	var META     = __webpack_require__(174)('meta')
+	  , isObject = __webpack_require__(182)
+	  , has      = __webpack_require__(170)
+	  , setDesc  = __webpack_require__(180).f
 	  , id       = 0;
 	var isExtensible = Object.isExtensible || function(){
 	  return true;
 	};
-	var FREEZE = !__webpack_require__(183)(function(){
+	var FREEZE = !__webpack_require__(185)(function(){
 	  return isExtensible(Object.preventExtensions({}));
 	});
 	var setMeta = function(it){
@@ -21161,25 +21177,25 @@ var omeroforms =
 	};
 
 /***/ },
-/* 227 */
+/* 229 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var global         = __webpack_require__(170)
-	  , core           = __webpack_require__(174)
-	  , LIBRARY        = __webpack_require__(200)
-	  , wksExt         = __webpack_require__(222)
-	  , defineProperty = __webpack_require__(178).f;
+	var global         = __webpack_require__(173)
+	  , core           = __webpack_require__(163)
+	  , LIBRARY        = __webpack_require__(202)
+	  , wksExt         = __webpack_require__(224)
+	  , defineProperty = __webpack_require__(180).f;
 	module.exports = function(name){
 	  var $Symbol = core.Symbol || (core.Symbol = LIBRARY ? {} : global.Symbol || {});
 	  if(name.charAt(0) != '_' && !(name in $Symbol))defineProperty($Symbol, name, {value: wksExt.f(name)});
 	};
 
 /***/ },
-/* 228 */
+/* 230 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var getKeys   = __webpack_require__(206)
-	  , toIObject = __webpack_require__(208);
+	var getKeys   = __webpack_require__(208)
+	  , toIObject = __webpack_require__(210);
 	module.exports = function(object, el){
 	  var O      = toIObject(object)
 	    , keys   = getKeys(O)
@@ -21190,13 +21206,13 @@ var omeroforms =
 	};
 
 /***/ },
-/* 229 */
+/* 231 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// all enumerable object keys, includes symbols
-	var getKeys = __webpack_require__(206)
-	  , gOPS    = __webpack_require__(230)
-	  , pIE     = __webpack_require__(231);
+	var getKeys = __webpack_require__(208)
+	  , gOPS    = __webpack_require__(232)
+	  , pIE     = __webpack_require__(233);
 	module.exports = function(it){
 	  var result     = getKeys(it)
 	    , getSymbols = gOPS.f;
@@ -21210,34 +21226,34 @@ var omeroforms =
 	};
 
 /***/ },
-/* 230 */
+/* 232 */
 /***/ function(module, exports) {
 
 	exports.f = Object.getOwnPropertySymbols;
 
 /***/ },
-/* 231 */
+/* 233 */
 /***/ function(module, exports) {
 
 	exports.f = {}.propertyIsEnumerable;
 
 /***/ },
-/* 232 */
+/* 234 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 7.2.2 IsArray(argument)
-	var cof = __webpack_require__(210);
+	var cof = __webpack_require__(212);
 	module.exports = Array.isArray || function isArray(arg){
 	  return cof(arg) == 'Array';
 	};
 
 /***/ },
-/* 233 */
+/* 235 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// fallback for IE11 buggy Object.getOwnPropertyNames with iframe and window
-	var toIObject = __webpack_require__(208)
-	  , gOPN      = __webpack_require__(234).f
+	var toIObject = __webpack_require__(210)
+	  , gOPN      = __webpack_require__(236).f
 	  , toString  = {}.toString;
 
 	var windowNames = typeof window == 'object' && window && Object.getOwnPropertyNames
@@ -21257,30 +21273,30 @@ var omeroforms =
 
 
 /***/ },
-/* 234 */
+/* 236 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 19.1.2.7 / 15.2.3.4 Object.getOwnPropertyNames(O)
-	var $keys      = __webpack_require__(207)
-	  , hiddenKeys = __webpack_require__(214).concat('length', 'prototype');
+	var $keys      = __webpack_require__(209)
+	  , hiddenKeys = __webpack_require__(216).concat('length', 'prototype');
 
 	exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O){
 	  return $keys(O, hiddenKeys);
 	};
 
 /***/ },
-/* 235 */
+/* 237 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var pIE            = __webpack_require__(231)
-	  , createDesc     = __webpack_require__(186)
-	  , toIObject      = __webpack_require__(208)
-	  , toPrimitive    = __webpack_require__(185)
-	  , has            = __webpack_require__(167)
-	  , IE8_DOM_DEFINE = __webpack_require__(181)
+	var pIE            = __webpack_require__(233)
+	  , createDesc     = __webpack_require__(188)
+	  , toIObject      = __webpack_require__(210)
+	  , toPrimitive    = __webpack_require__(187)
+	  , has            = __webpack_require__(170)
+	  , IE8_DOM_DEFINE = __webpack_require__(183)
 	  , gOPD           = Object.getOwnPropertyDescriptor;
 
-	exports.f = __webpack_require__(182) ? gOPD : function getOwnPropertyDescriptor(O, P){
+	exports.f = __webpack_require__(184) ? gOPD : function getOwnPropertyDescriptor(O, P){
 	  O = toIObject(O);
 	  P = toPrimitive(P, true);
 	  if(IE8_DOM_DEFINE)try {
@@ -21290,40 +21306,40 @@ var omeroforms =
 	};
 
 /***/ },
-/* 236 */
+/* 238 */
 /***/ function(module, exports) {
 
 	
 
 /***/ },
-/* 237 */
-/***/ function(module, exports, __webpack_require__) {
-
-	__webpack_require__(227)('asyncIterator');
-
-/***/ },
-/* 238 */
-/***/ function(module, exports, __webpack_require__) {
-
-	__webpack_require__(227)('observable');
-
-/***/ },
 /* 239 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(229)('asyncIterator');
+
+/***/ },
+/* 240 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(229)('observable');
+
+/***/ },
+/* 241 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	exports.__esModule = true;
 
-	var _setPrototypeOf = __webpack_require__(240);
+	var _setPrototypeOf = __webpack_require__(242);
 
 	var _setPrototypeOf2 = _interopRequireDefault(_setPrototypeOf);
 
-	var _create = __webpack_require__(244);
+	var _create = __webpack_require__(246);
 
 	var _create2 = _interopRequireDefault(_create);
 
-	var _typeof2 = __webpack_require__(193);
+	var _typeof2 = __webpack_require__(195);
 
 	var _typeof3 = _interopRequireDefault(_typeof2);
 
@@ -21346,34 +21362,34 @@ var omeroforms =
 	};
 
 /***/ },
-/* 240 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = { "default": __webpack_require__(241), __esModule: true };
-
-/***/ },
-/* 241 */
-/***/ function(module, exports, __webpack_require__) {
-
-	__webpack_require__(242);
-	module.exports = __webpack_require__(174).Object.setPrototypeOf;
-
-/***/ },
 /* 242 */
 /***/ function(module, exports, __webpack_require__) {
 
-	// 19.1.3.19 Object.setPrototypeOf(O, proto)
-	var $export = __webpack_require__(173);
-	$export($export.S, 'Object', {setPrototypeOf: __webpack_require__(243).set});
+	module.exports = { "default": __webpack_require__(243), __esModule: true };
 
 /***/ },
 /* 243 */
 /***/ function(module, exports, __webpack_require__) {
 
+	__webpack_require__(244);
+	module.exports = __webpack_require__(163).Object.setPrototypeOf;
+
+/***/ },
+/* 244 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// 19.1.3.19 Object.setPrototypeOf(O, proto)
+	var $export = __webpack_require__(176);
+	$export($export.S, 'Object', {setPrototypeOf: __webpack_require__(245).set});
+
+/***/ },
+/* 245 */
+/***/ function(module, exports, __webpack_require__) {
+
 	// Works with __proto__ only. Old v8 can't work with null proto objects.
 	/* eslint-disable no-proto */
-	var isObject = __webpack_require__(180)
-	  , anObject = __webpack_require__(179);
+	var isObject = __webpack_require__(182)
+	  , anObject = __webpack_require__(181);
 	var check = function(O, proto){
 	  anObject(O);
 	  if(!isObject(proto) && proto !== null)throw TypeError(proto + ": can't set as prototype!");
@@ -21382,7 +21398,7 @@ var omeroforms =
 	  set: Object.setPrototypeOf || ('__proto__' in {} ? // eslint-disable-line
 	    function(test, buggy, set){
 	      try {
-	        set = __webpack_require__(175)(Function.call, __webpack_require__(235).f(Object.prototype, '__proto__').set, 2);
+	        set = __webpack_require__(177)(Function.call, __webpack_require__(237).f(Object.prototype, '__proto__').set, 2);
 	        set(test, []);
 	        buggy = !(test instanceof Array);
 	      } catch(e){ buggy = true; }
@@ -21397,31 +21413,31 @@ var omeroforms =
 	};
 
 /***/ },
-/* 244 */
+/* 246 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = { "default": __webpack_require__(245), __esModule: true };
+	module.exports = { "default": __webpack_require__(247), __esModule: true };
 
 /***/ },
-/* 245 */
+/* 247 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(246);
-	var $Object = __webpack_require__(174).Object;
+	__webpack_require__(248);
+	var $Object = __webpack_require__(163).Object;
 	module.exports = function create(P, D){
 	  return $Object.create(P, D);
 	};
 
 /***/ },
-/* 246 */
+/* 248 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var $export = __webpack_require__(173)
+	var $export = __webpack_require__(176)
 	// 19.1.2.2 / 15.2.3.5 Object.create(O [, Properties])
-	$export($export.S, 'Object', {create: __webpack_require__(204)});
+	$export($export.S, 'Object', {create: __webpack_require__(206)});
 
 /***/ },
-/* 247 */
+/* 249 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -21430,7 +21446,7 @@ var omeroforms =
 	  value: true
 	});
 
-	var _Form = __webpack_require__(248);
+	var _Form = __webpack_require__(250);
 
 	var _Form2 = _interopRequireDefault(_Form);
 
@@ -21439,7 +21455,7 @@ var omeroforms =
 	exports.default = _Form2.default;
 
 /***/ },
-/* 248 */
+/* 250 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -21456,21 +21472,21 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _SchemaField2 = __webpack_require__(249);
+	var _SchemaField2 = __webpack_require__(251);
 
 	var _SchemaField3 = _interopRequireDefault(_SchemaField2);
 
-	var _TitleField2 = __webpack_require__(258);
+	var _TitleField2 = __webpack_require__(260);
 
 	var _TitleField3 = _interopRequireDefault(_TitleField2);
 
-	var _ErrorList = __webpack_require__(282);
+	var _ErrorList = __webpack_require__(284);
 
 	var _ErrorList2 = _interopRequireDefault(_ErrorList);
 
-	var _utils = __webpack_require__(250);
+	var _utils = __webpack_require__(252);
 
-	var _validate = __webpack_require__(283);
+	var _validate = __webpack_require__(285);
 
 	var _validate2 = _interopRequireDefault(_validate);
 
@@ -21679,7 +21695,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 249 */
+/* 251 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -21694,29 +21710,29 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _utils = __webpack_require__(250);
+	var _utils = __webpack_require__(252);
 
-	var _ArrayField = __webpack_require__(275);
+	var _ArrayField = __webpack_require__(277);
 
 	var _ArrayField2 = _interopRequireDefault(_ArrayField);
 
-	var _BooleanField = __webpack_require__(276);
+	var _BooleanField = __webpack_require__(278);
 
 	var _BooleanField2 = _interopRequireDefault(_BooleanField);
 
-	var _NumberField = __webpack_require__(278);
+	var _NumberField = __webpack_require__(280);
 
 	var _NumberField2 = _interopRequireDefault(_NumberField);
 
-	var _ObjectField = __webpack_require__(280);
+	var _ObjectField = __webpack_require__(282);
 
 	var _ObjectField2 = _interopRequireDefault(_ObjectField);
 
-	var _StringField = __webpack_require__(279);
+	var _StringField = __webpack_require__(281);
 
 	var _StringField2 = _interopRequireDefault(_StringField);
 
-	var _UnsupportedField = __webpack_require__(281);
+	var _UnsupportedField = __webpack_require__(283);
 
 	var _UnsupportedField2 = _interopRequireDefault(_UnsupportedField);
 
@@ -21906,7 +21922,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 250 */
+/* 252 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(setImmediate) {"use strict";
@@ -21939,73 +21955,73 @@ var omeroforms =
 	exports.pad = pad;
 	exports.setState = setState;
 
-	__webpack_require__(252);
+	__webpack_require__(254);
 
-	var _deeper = __webpack_require__(253);
+	var _deeper = __webpack_require__(255);
 
 	var _deeper2 = _interopRequireDefault(_deeper);
 
-	var _TitleField = __webpack_require__(258);
+	var _TitleField = __webpack_require__(260);
 
 	var _TitleField2 = _interopRequireDefault(_TitleField);
 
-	var _PasswordWidget = __webpack_require__(259);
+	var _PasswordWidget = __webpack_require__(261);
 
 	var _PasswordWidget2 = _interopRequireDefault(_PasswordWidget);
 
-	var _RadioWidget = __webpack_require__(261);
+	var _RadioWidget = __webpack_require__(263);
 
 	var _RadioWidget2 = _interopRequireDefault(_RadioWidget);
 
-	var _UpDownWidget = __webpack_require__(262);
+	var _UpDownWidget = __webpack_require__(264);
 
 	var _UpDownWidget2 = _interopRequireDefault(_UpDownWidget);
 
-	var _RangeWidget = __webpack_require__(263);
+	var _RangeWidget = __webpack_require__(265);
 
 	var _RangeWidget2 = _interopRequireDefault(_RangeWidget);
 
-	var _SelectWidget = __webpack_require__(264);
+	var _SelectWidget = __webpack_require__(266);
 
 	var _SelectWidget2 = _interopRequireDefault(_SelectWidget);
 
-	var _TextWidget = __webpack_require__(265);
+	var _TextWidget = __webpack_require__(267);
 
 	var _TextWidget2 = _interopRequireDefault(_TextWidget);
 
-	var _DateWidget = __webpack_require__(266);
+	var _DateWidget = __webpack_require__(268);
 
 	var _DateWidget2 = _interopRequireDefault(_DateWidget);
 
-	var _DateTimeWidget = __webpack_require__(267);
+	var _DateTimeWidget = __webpack_require__(269);
 
 	var _DateTimeWidget2 = _interopRequireDefault(_DateTimeWidget);
 
-	var _AltDateWidget = __webpack_require__(268);
+	var _AltDateWidget = __webpack_require__(270);
 
 	var _AltDateWidget2 = _interopRequireDefault(_AltDateWidget);
 
-	var _AltDateTimeWidget = __webpack_require__(269);
+	var _AltDateTimeWidget = __webpack_require__(271);
 
 	var _AltDateTimeWidget2 = _interopRequireDefault(_AltDateTimeWidget);
 
-	var _EmailWidget = __webpack_require__(270);
+	var _EmailWidget = __webpack_require__(272);
 
 	var _EmailWidget2 = _interopRequireDefault(_EmailWidget);
 
-	var _URLWidget = __webpack_require__(271);
+	var _URLWidget = __webpack_require__(273);
 
 	var _URLWidget2 = _interopRequireDefault(_URLWidget);
 
-	var _TextareaWidget = __webpack_require__(272);
+	var _TextareaWidget = __webpack_require__(274);
 
 	var _TextareaWidget2 = _interopRequireDefault(_TextareaWidget);
 
-	var _HiddenWidget = __webpack_require__(273);
+	var _HiddenWidget = __webpack_require__(275);
 
 	var _HiddenWidget2 = _interopRequireDefault(_HiddenWidget);
 
-	var _ColorWidget = __webpack_require__(274);
+	var _ColorWidget = __webpack_require__(276);
 
 	var _ColorWidget2 = _interopRequireDefault(_ColorWidget);
 
@@ -22062,7 +22078,7 @@ var omeroforms =
 	      // components.
 	      // Investigation hint: getDefaultRegistry is called from within
 	      // SchemaField itself.
-	      SchemaField: __webpack_require__(249).default,
+	      SchemaField: __webpack_require__(251).default,
 	      TitleField: _TitleField2.default
 	    },
 	    widgets: {},
@@ -22351,10 +22367,10 @@ var omeroforms =
 	    setImmediate(callback);
 	  }
 	}
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(251).setImmediate))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(253).setImmediate))
 
 /***/ },
-/* 251 */
+/* 253 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(5).nextTick;
@@ -22433,10 +22449,10 @@ var omeroforms =
 	exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
 	  delete immediateIds[id];
 	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(251).setImmediate, __webpack_require__(251).clearImmediate))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(253).setImmediate, __webpack_require__(253).clearImmediate))
 
 /***/ },
-/* 252 */
+/* 254 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global, clearImmediate, process) {(function (global, undefined) {
@@ -22615,10 +22631,10 @@ var omeroforms =
 	    attachTo.clearImmediate = clearImmediate;
 	}(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
 
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(251).clearImmediate, __webpack_require__(5)))
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }()), __webpack_require__(253).clearImmediate, __webpack_require__(5)))
 
 /***/ },
-/* 253 */
+/* 255 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {'use strict'
@@ -22746,10 +22762,10 @@ var omeroforms =
 	  }
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(254).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(256).Buffer))
 
 /***/ },
-/* 254 */
+/* 256 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer, global) {/*!
@@ -22762,9 +22778,9 @@ var omeroforms =
 
 	'use strict'
 
-	var base64 = __webpack_require__(255)
-	var ieee754 = __webpack_require__(256)
-	var isArray = __webpack_require__(257)
+	var base64 = __webpack_require__(257)
+	var ieee754 = __webpack_require__(258)
+	var isArray = __webpack_require__(259)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = SlowBuffer
@@ -24301,10 +24317,10 @@ var omeroforms =
 	  return i
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(254).Buffer, (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(256).Buffer, (function() { return this; }())))
 
 /***/ },
-/* 255 */
+/* 257 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -24434,7 +24450,7 @@ var omeroforms =
 
 
 /***/ },
-/* 256 */
+/* 258 */
 /***/ function(module, exports) {
 
 	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -24524,7 +24540,7 @@ var omeroforms =
 
 
 /***/ },
-/* 257 */
+/* 259 */
 /***/ function(module, exports) {
 
 	var toString = {}.toString;
@@ -24535,7 +24551,7 @@ var omeroforms =
 
 
 /***/ },
-/* 258 */
+/* 260 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -24577,7 +24593,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 259 */
+/* 261 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -24592,7 +24608,7 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _BaseInput = __webpack_require__(260);
+	var _BaseInput = __webpack_require__(262);
 
 	var _BaseInput2 = _interopRequireDefault(_BaseInput);
 
@@ -24612,7 +24628,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 260 */
+/* 262 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -24666,7 +24682,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 261 */
+/* 263 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -24734,7 +24750,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 262 */
+/* 264 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -24749,7 +24765,7 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _BaseInput = __webpack_require__(260);
+	var _BaseInput = __webpack_require__(262);
 
 	var _BaseInput2 = _interopRequireDefault(_BaseInput);
 
@@ -24783,7 +24799,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 263 */
+/* 265 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -24798,7 +24814,7 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _BaseInput = __webpack_require__(260);
+	var _BaseInput = __webpack_require__(262);
 
 	var _BaseInput2 = _interopRequireDefault(_BaseInput);
 
@@ -24846,7 +24862,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 264 */
+/* 266 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -24859,7 +24875,7 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _utils = __webpack_require__(250);
+	var _utils = __webpack_require__(252);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -24943,7 +24959,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 265 */
+/* 267 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -24956,7 +24972,7 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _BaseInput = __webpack_require__(260);
+	var _BaseInput = __webpack_require__(262);
 
 	var _BaseInput2 = _interopRequireDefault(_BaseInput);
 
@@ -24976,7 +24992,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 266 */
+/* 268 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -24991,7 +25007,7 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _BaseInput = __webpack_require__(260);
+	var _BaseInput = __webpack_require__(262);
 
 	var _BaseInput2 = _interopRequireDefault(_BaseInput);
 
@@ -25011,7 +25027,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 267 */
+/* 269 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -25026,7 +25042,7 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _BaseInput = __webpack_require__(260);
+	var _BaseInput = __webpack_require__(262);
 
 	var _BaseInput2 = _interopRequireDefault(_BaseInput);
 
@@ -25066,7 +25082,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 268 */
+/* 270 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -25083,9 +25099,9 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _utils = __webpack_require__(250);
+	var _utils = __webpack_require__(252);
 
-	var _SelectWidget = __webpack_require__(264);
+	var _SelectWidget = __webpack_require__(266);
 
 	var _SelectWidget2 = _interopRequireDefault(_SelectWidget);
 
@@ -25295,7 +25311,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 269 */
+/* 271 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -25310,7 +25326,7 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _AltDateWidget = __webpack_require__(268);
+	var _AltDateWidget = __webpack_require__(270);
 
 	var _AltDateWidget2 = _interopRequireDefault(_AltDateWidget);
 
@@ -25335,7 +25351,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 270 */
+/* 272 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -25350,7 +25366,7 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _BaseInput = __webpack_require__(260);
+	var _BaseInput = __webpack_require__(262);
 
 	var _BaseInput2 = _interopRequireDefault(_BaseInput);
 
@@ -25370,7 +25386,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 271 */
+/* 273 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -25385,7 +25401,7 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _BaseInput = __webpack_require__(260);
+	var _BaseInput = __webpack_require__(262);
 
 	var _BaseInput2 = _interopRequireDefault(_BaseInput);
 
@@ -25405,7 +25421,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 272 */
+/* 274 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -25458,7 +25474,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 273 */
+/* 275 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -25491,7 +25507,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 274 */
+/* 276 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -25506,7 +25522,7 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _BaseInput = __webpack_require__(260);
+	var _BaseInput = __webpack_require__(262);
 
 	var _BaseInput2 = _interopRequireDefault(_BaseInput);
 
@@ -25526,7 +25542,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 275 */
+/* 277 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -25541,9 +25557,9 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _utils = __webpack_require__(250);
+	var _utils = __webpack_require__(252);
 
-	var _SelectWidget = __webpack_require__(264);
+	var _SelectWidget = __webpack_require__(266);
 
 	var _SelectWidget2 = _interopRequireDefault(_SelectWidget);
 
@@ -25944,7 +25960,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 276 */
+/* 278 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -25959,9 +25975,9 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _utils = __webpack_require__(250);
+	var _utils = __webpack_require__(252);
 
-	var _CheckboxWidget = __webpack_require__(277);
+	var _CheckboxWidget = __webpack_require__(279);
 
 	var _CheckboxWidget2 = _interopRequireDefault(_CheckboxWidget);
 
@@ -26037,7 +26053,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 277 */
+/* 279 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -26100,7 +26116,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 278 */
+/* 280 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -26115,9 +26131,9 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _utils = __webpack_require__(250);
+	var _utils = __webpack_require__(252);
 
-	var _StringField = __webpack_require__(279);
+	var _StringField = __webpack_require__(281);
 
 	var _StringField2 = _interopRequireDefault(_StringField);
 
@@ -26148,7 +26164,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 279 */
+/* 281 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -26163,13 +26179,13 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _utils = __webpack_require__(250);
+	var _utils = __webpack_require__(252);
 
-	var _TextWidget = __webpack_require__(265);
+	var _TextWidget = __webpack_require__(267);
 
 	var _TextWidget2 = _interopRequireDefault(_TextWidget);
 
-	var _SelectWidget = __webpack_require__(264);
+	var _SelectWidget = __webpack_require__(266);
 
 	var _SelectWidget2 = _interopRequireDefault(_SelectWidget);
 
@@ -26244,7 +26260,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 280 */
+/* 282 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {"use strict";
@@ -26259,7 +26275,7 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _utils = __webpack_require__(250);
+	var _utils = __webpack_require__(252);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -26441,7 +26457,7 @@ var omeroforms =
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5)))
 
 /***/ },
-/* 281 */
+/* 283 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -26471,7 +26487,7 @@ var omeroforms =
 	}
 
 /***/ },
-/* 282 */
+/* 284 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -26517,7 +26533,7 @@ var omeroforms =
 	}
 
 /***/ },
-/* 283 */
+/* 285 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -26531,9 +26547,9 @@ var omeroforms =
 	exports.toErrorList = toErrorList;
 	exports.default = validateFormData;
 
-	var _jsonschema = __webpack_require__(284);
+	var _jsonschema = __webpack_require__(286);
 
-	var _utils = __webpack_require__(250);
+	var _utils = __webpack_require__(252);
 
 	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
@@ -26694,16 +26710,16 @@ var omeroforms =
 	}
 
 /***/ },
-/* 284 */
+/* 286 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var Validator = module.exports.Validator = __webpack_require__(285);
+	var Validator = module.exports.Validator = __webpack_require__(287);
 
-	module.exports.ValidatorResult = __webpack_require__(293).ValidatorResult;
-	module.exports.ValidationError = __webpack_require__(293).ValidationError;
-	module.exports.SchemaError = __webpack_require__(293).SchemaError;
+	module.exports.ValidatorResult = __webpack_require__(295).ValidatorResult;
+	module.exports.ValidationError = __webpack_require__(295).ValidationError;
+	module.exports.SchemaError = __webpack_require__(295).SchemaError;
 
 	module.exports.validate = function (instance, schema, options) {
 	  var v = new Validator();
@@ -26712,15 +26728,15 @@ var omeroforms =
 
 
 /***/ },
-/* 285 */
+/* 287 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var urilib = __webpack_require__(286);
+	var urilib = __webpack_require__(288);
 
-	var attribute = __webpack_require__(292);
-	var helpers = __webpack_require__(293);
+	var attribute = __webpack_require__(294);
+	var helpers = __webpack_require__(295);
 	var ValidatorResult = helpers.ValidatorResult;
 	var SchemaError = helpers.SchemaError;
 	var SchemaContext = helpers.SchemaContext;
@@ -27038,7 +27054,7 @@ var omeroforms =
 
 
 /***/ },
-/* 286 */
+/* 288 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -27062,7 +27078,7 @@ var omeroforms =
 	// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 	// USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-	var punycode = __webpack_require__(287);
+	var punycode = __webpack_require__(289);
 
 	exports.parse = urlParse;
 	exports.resolve = urlResolve;
@@ -27134,7 +27150,7 @@ var omeroforms =
 	      'gopher:': true,
 	      'file:': true
 	    },
-	    querystring = __webpack_require__(289);
+	    querystring = __webpack_require__(291);
 
 	function urlParse(url, parseQueryString, slashesDenoteHost) {
 	  if (url && isObject(url) && url instanceof Url) return url;
@@ -27751,7 +27767,7 @@ var omeroforms =
 
 
 /***/ },
-/* 287 */
+/* 289 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/*! https://mths.be/punycode v1.3.2 by @mathias */
@@ -28283,10 +28299,10 @@ var omeroforms =
 
 	}(this));
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(288)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(290)(module), (function() { return this; }())))
 
 /***/ },
-/* 288 */
+/* 290 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -28302,17 +28318,17 @@ var omeroforms =
 
 
 /***/ },
-/* 289 */
+/* 291 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	exports.decode = exports.parse = __webpack_require__(290);
-	exports.encode = exports.stringify = __webpack_require__(291);
+	exports.decode = exports.parse = __webpack_require__(292);
+	exports.encode = exports.stringify = __webpack_require__(293);
 
 
 /***/ },
-/* 290 */
+/* 292 */
 /***/ function(module, exports) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -28398,7 +28414,7 @@ var omeroforms =
 
 
 /***/ },
-/* 291 */
+/* 293 */
 /***/ function(module, exports) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -28468,12 +28484,12 @@ var omeroforms =
 
 
 /***/ },
-/* 292 */
+/* 294 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var helpers = __webpack_require__(293);
+	var helpers = __webpack_require__(295);
 
 	/** @type ValidatorResult */
 	var ValidatorResult = helpers.ValidatorResult;
@@ -29259,12 +29275,12 @@ var omeroforms =
 
 
 /***/ },
-/* 293 */
+/* 295 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var uri = __webpack_require__(286);
+	var uri = __webpack_require__(288);
 
 	var ValidationError = exports.ValidationError = function ValidationError (message, instance, schema, propertyPath, name, argument) {
 	  if (propertyPath) {
@@ -29542,22 +29558,6 @@ var omeroforms =
 		return a.map(function(v){ return '/'+encodeURIComponent(v).replace(/~/g,'%7E'); }).join('');
 	};
 
-
-/***/ },
-/* 294 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = { "default": __webpack_require__(295), __esModule: true };
-
-/***/ },
-/* 295 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var core  = __webpack_require__(174)
-	  , $JSON = core.JSON || (core.JSON = {stringify: JSON.stringify});
-	module.exports = function stringify(it){ // eslint-disable-line no-unused-vars
-	  return $JSON.stringify.apply($JSON, arguments);
-	};
 
 /***/ }
 /******/ ]);

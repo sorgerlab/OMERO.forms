@@ -76,7 +76,7 @@ def listForms(group_id=-1):
 
 def listAllMapAnnotations(group_id=-1):
     params = omero.sys.ParametersI()
-    # params.add('oname', omero.rtypes.wrap('formmaster'))
+    params.add('oname', omero.rtypes.wrap('formmaster'))
     service_opts = deepcopy(conn.SERVICE_OPTS)
     service_opts.setOmeroGroup(group_id)
 
@@ -85,8 +85,8 @@ def listAllMapAnnotations(group_id=-1):
         SELECT anno
         FROM MapAnnotation anno
         JOIN anno.details details
+        AND details.owner.omeName = :oname
         """
-    # AND details.owner.omeName = :oname
 
     for e in qs.projection(q, params, service_opts):
         anno = e[0].val
@@ -97,7 +97,7 @@ def listAllMapAnnotations(group_id=-1):
 
 def listAllMapAnnotationsOnDataset(dataset_id, group_id=-1):
     params = omero.sys.ParametersI()
-    # params.add('oname', omero.rtypes.wrap('formmaster'))
+    params.add('oname', omero.rtypes.wrap('formmaster'))
     params.add('did', omero.rtypes.wrap(long(dataset_id)))
     service_opts = deepcopy(conn.SERVICE_OPTS)
     service_opts.setOmeroGroup(group_id)
@@ -107,13 +107,12 @@ def listAllMapAnnotationsOnDataset(dataset_id, group_id=-1):
         SELECT anno
         FROM Dataset dataset
         JOIN dataset.annotationLinks links
+        JOIN anno.details details
         JOIN links.child anno
         WHERE anno.class = MapAnnotation
         AND dataset.id = :did
-
+        AND details.owner.omeName = :oname
         """
-    # JOIN anno.details details
-    # AND details.owner.omeName = :oname
 
     for e in qs.projection(q, params, service_opts):
         anno = e[0].val
@@ -218,7 +217,7 @@ def listGroups():
         print group.id.val, group.name.val
 
 
-def addOther(dataset_id, group_id=None):
+def addOther(dataset_id, group_id):
     service_opts = deepcopy(conn.SERVICE_OPTS)
     service_opts.setOmeroGroup(group_id)
 
@@ -227,7 +226,8 @@ def addOther(dataset_id, group_id=None):
 
     keyValueData = [["other6", "other6"]]
     mapAnn = omero.gateway.MapAnnotationWrapper(conn)
-    namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
+    # namespace = omero.constants.metadata.NSCLIENTMAPANNOTATION
+    namespace = "dpwr"
     mapAnn.setNs(namespace)
     mapAnn.setValue(keyValueData)
     mapAnn.save()
@@ -257,8 +257,7 @@ def getFormData(dataset_id, form_id, group_id=-1):
     service_opts.setOmeroGroup(group_id)
 
     params = omero.sys.ParametersI()
-    # TODO Change to 'formmaster'
-    params.add('oname', omero.rtypes.wrap('rou'))
+    params.add('oname', omero.rtypes.wrap('formmaster'))
     params.add('did', omero.rtypes.wrap(long(dataset_id)))
     params.add('fid', omero.rtypes.wrap(form_id))
 
@@ -284,6 +283,42 @@ def getFormData(dataset_id, form_id, group_id=-1):
         mv = row[0]
         anno = row[1]
         print mv.val, '\t', anno.val.id.val
+
+
+def datasetFormHistory(dataset_id, form_id, group_id):
+
+    form_history_id = '%s_%s_%s' % ('Dataset', dataset_id, form_id)
+
+    params = omero.sys.ParametersI()
+    params.add('oname', omero.rtypes.wrap('formmaster'))
+    params.add('gid', omero.rtypes.wrap(long(group_id)))
+    params.add('fhid', omero.rtypes.wrap(form_history_id))
+    service_opts = deepcopy(conn.SERVICE_OPTS)
+    service_opts.setOmeroGroup(group_id)
+
+    qs = conn.getQueryService()
+    q = """
+        SELECT anno
+        FROM ExperimenterGroup grp
+        JOIN grp.annotationLinks links
+        JOIN links.child anno
+        JOIN anno.details details
+        JOIN anno.mapValue mapValue
+        WHERE anno.class = MapAnnotation
+        AND grp.id = :gid
+        AND details.owner.omeName = :oname
+        AND mapValue.name = 'form_history_id'
+        AND mapValue.value = :fhid
+        """
+
+    rows = qs.projection(q, params, service_opts)
+    assert len(rows) == 1
+
+    anno = rows[0][0].val
+    print 'Annotation %i' % anno.id.val
+    for pair in anno.getMapValue():
+        if pair.name == 'history':
+            print('History: %s' % pair.value)
 
 # Add a key-value to the group
 form1 = """
@@ -311,16 +346,17 @@ form2 = """
 """
 
 # listForms()
-# listForms(203)
+# listForms(103)
 # addForm(form1, "science_stuff1", 203)
 # addForm(form2, "second_form", 203)
 # deleteForm(420)
 # listDatasets(103)
 # listGroups()
-# addOther(251)
+addOther(201, 103)
 # editForm(412, form2)
 # editForm(412, form2, 203)
 # listAllMapAnnotations()
-# deleteOther(421)
+# deleteOther(349)
 # getFormData(251, "science_stuff1", 203)
-listAllMapAnnotationsOnDataset(251, 203)
+# listAllMapAnnotationsOnDataset(251, 203)
+# datasetFormHistory(201, 'science_stuff1', 103)

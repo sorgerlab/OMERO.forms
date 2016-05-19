@@ -32,9 +32,10 @@ def update(request, conn=None, **kwargs):
 
     form_id = update_data['formId']
     form_data = update_data['formData']
+    object_type = "Dataset"
     object_id = update_data['datasetId']
     changed_at = datetime.datetime.now()
-    changed_by = conn.user.getName()
+    user_id = conn.user.getName()
 
 
     group_id = request.session.get('active_group')
@@ -44,7 +45,7 @@ def update(request, conn=None, **kwargs):
     # print form_id
     # print form_data
     # print changed_at
-    # print changed_by
+    # print user_id
     # print group_id
 
     # print type(form_data)
@@ -57,23 +58,25 @@ def update(request, conn=None, **kwargs):
     )
     su_conn.connect()
 
-    # TODO As using direct save method, need to set the SERVICE_OPTS directly
-    su_conn.SERVICE_OPTS.setOmeroGroup(group_id)
-
-    utils.addOrUpdateObjectMapAnnotation(su_conn, 'Dataset', object_id,
-                                         form_id, form_data)
-
     # TODO Check that the form submitted is valid for the group it is being
     # submitted for
 
     # TODO Check that the user is a member of the current group and that the
     # dataset is in that group
 
+    # Set the group to the current group
+    su_conn.SERVICE_OPTS.setOmeroGroup(group_id)
+
+    utils.addOrUpdateObjectMapAnnotation(su_conn, object_type, object_id,
+                                         form_id, form_data)
+
 
     # TODO Save the JSON form data to the history location, wherever that is
     #   json-data
     #   timestamp of change
     #   author of change
+    utils.addOrUpdateHistoryMapAnnotation(su_conn, object_type, object_id,
+                                          form_id, form_data, user_id, group_id)
 
 
 
@@ -113,6 +116,12 @@ def update(request, conn=None, **kwargs):
 
 @login_required(setGroupContext=True)
 def dataset_keys(request, conn=None, **kwargs):
+
+    # TODO Indicate whether this user can populate the form.
+    # Private group: Yes, if own data, which it always will be.
+    # Read-only group: Yes, if owner. No, otherwise
+    # Read-annotate group: Yes, always
+    # Read-write group: Forms disabled
 
     if not request.GET:
         return HttpResponseNotAllowed('Methods allowed: GET')
