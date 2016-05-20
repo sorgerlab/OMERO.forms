@@ -19736,6 +19736,18 @@ var omeroforms =
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+	function compareFormData(d1, d2) {
+	  for (var key in d1) {
+	    if (d1.hasOwnProperty(key)) {
+	      if (d1[key] !== d2[key]) {
+	        console.log('' + d1[key] + ' - ' + d2[key]);
+	        return false;
+	      }
+	    }
+	  }
+	  return true;
+	}
+
 	var Forms = function (_React$Component) {
 	  (0, _inherits3.default)(Forms, _React$Component);
 
@@ -19746,11 +19758,6 @@ var omeroforms =
 
 	    _this.state = {
 	      forms: {},
-	      formData: {
-	        project: "Mega science thing",
-	        something: true,
-	        someNumber: 500
-	      },
 	      activeFormId: undefined
 	    };
 
@@ -19785,9 +19792,16 @@ var omeroforms =
 
 	        var forms = {};
 	        jsonData.forms.forEach(function (form) {
+
+	          var formData = void 0;
+	          if (form.hasOwnProperty('form_data')) {
+	            formData = JSON.parse(form.form_data);
+	          }
+
 	          forms[form.form_id] = {
 	            form_id: form.form_id,
-	            form_schema: JSON.parse(form.form_json)
+	            form_schema: JSON.parse(form.form_json),
+	            form_data: formData
 	          };
 	        });
 
@@ -19805,8 +19819,11 @@ var omeroforms =
 	  }, {
 	    key: 'submitForm',
 	    value: function submitForm(formDataSubmission) {
-	      console.log('submitform');
-	      console.log(formDataSubmission);
+
+	      // If there are no changes, bail out as there is nothing to be done
+	      if (compareFormData(formDataSubmission.formData, this.state.forms[this.state.activeFormId].form_data)) {
+	        return;
+	      }
 
 	      var updateForm = {
 	        'formData': formDataSubmission.formData,
@@ -19820,7 +19837,11 @@ var omeroforms =
 	        type: "POST",
 	        data: (0, _stringify2.default)(updateForm),
 	        success: function (data) {
-	          // No action required
+	          var form = this.state.forms[updateForm.formId];
+	          form.form_data = updateForm.formData;
+	          this.setState({
+	            forms: this.state.forms
+	          });
 	        }.bind(this),
 	        error: function (xhr, status, err) {
 	          console.error(this.props.url, status, err.toString());
@@ -19870,7 +19891,7 @@ var omeroforms =
 
 	        form = _react2.default.createElement(_reactJsonschemaForm2.default, {
 	          schema: activeForm.form_schema,
-
+	          formData: activeForm.form_data,
 	          onSubmit: this.submitForm
 	        });
 	      }

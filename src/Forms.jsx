@@ -3,6 +3,17 @@ import ReactDOM from 'react-dom';
 
 import Form from "react-jsonschema-form";
 
+function compareFormData(d1, d2) {
+  for (var key in d1) {
+      if (d1.hasOwnProperty(key)) {
+        if (d1[key] !== d2[key]) {
+          console.log('' + d1[key] + ' - ' + d2[key]);
+          return false;
+        }
+      }
+  }
+  return true;
+}
 
 export default class Forms extends React.Component {
 
@@ -11,11 +22,6 @@ export default class Forms extends React.Component {
 
     this.state = {
       forms: {},
-      formData: {
-        project: "Mega science thing",
-        something: true,
-        someNumber: 500
-      },
       activeFormId: undefined
     }
 
@@ -45,9 +51,16 @@ export default class Forms extends React.Component {
 
       let forms = {};
       jsonData.forms.forEach(form => {
+
+        let formData;
+        if (form.hasOwnProperty('form_data')) {
+          formData = JSON.parse(form.form_data);
+        }
+
         forms[form.form_id] = {
           form_id: form.form_id,
-          form_schema: JSON.parse(form.form_json)
+          form_schema: JSON.parse(form.form_json),
+          form_data: formData
         }
       });
 
@@ -58,15 +71,21 @@ export default class Forms extends React.Component {
 
       this.setState({
         forms: forms,
-        activeFormId: activeFormId
+        activeFormId: activeFormId,
       });
 
     });
   }
 
   submitForm(formDataSubmission) {
-    console.log('submitform');
-    console.log(formDataSubmission);
+
+    // If there are no changes, bail out as there is nothing to be done
+    if (compareFormData(
+      formDataSubmission.formData,
+      this.state.forms[this.state.activeFormId].form_data
+    )) {
+      return;
+    }
 
     let updateForm = {
       'formData': formDataSubmission.formData,
@@ -80,7 +99,11 @@ export default class Forms extends React.Component {
       type: "POST",
       data: JSON.stringify(updateForm),
       success: function(data) {
-        // No action required
+        const form = this.state.forms[updateForm.formId];
+        form.form_data = updateForm.formData
+        this.setState({
+          forms: this.state.forms
+        })
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
@@ -127,7 +150,7 @@ export default class Forms extends React.Component {
       form = (
         <Form
           schema={ activeForm.form_schema }
-
+          formData = { activeForm.form_data }
           onSubmit={ this.submitForm }
         />
       )

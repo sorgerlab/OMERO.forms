@@ -85,7 +85,7 @@ def listAllMapAnnotations(group_id=-1):
         SELECT anno
         FROM MapAnnotation anno
         JOIN anno.details details
-        AND details.owner.omeName = :oname
+        WHERE details.owner.omeName = :oname
         """
 
     for e in qs.projection(q, params, service_opts):
@@ -107,8 +107,8 @@ def listAllMapAnnotationsOnDataset(dataset_id, group_id=-1):
         SELECT anno
         FROM Dataset dataset
         JOIN dataset.annotationLinks links
-        JOIN anno.details details
         JOIN links.child anno
+        JOIN anno.details details
         WHERE anno.class = MapAnnotation
         AND dataset.id = :did
         AND details.owner.omeName = :oname
@@ -352,11 +352,14 @@ form2 = """
 # deleteForm(420)
 # listDatasets(103)
 # listGroups()
-addOther(201, 103)
+# addOther(201, 103)
 # editForm(412, form2)
 # editForm(412, form2, 203)
-# listAllMapAnnotations()
+listAllMapAnnotations()
 # deleteOther(349)
 # getFormData(251, "science_stuff1", 203)
-# listAllMapAnnotationsOnDataset(251, 203)
+# listAllMapAnnotationsOnDataset(201, 103)
 # datasetFormHistory(201, 'science_stuff1', 103)
+
+# for x in [340, 301, 329]:
+    # deleteOther(x)

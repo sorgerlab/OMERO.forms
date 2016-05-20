@@ -76,7 +76,7 @@ def update(request, conn=None, **kwargs):
     #   timestamp of change
     #   author of change
     utils.addOrUpdateHistoryMapAnnotation(su_conn, object_type, object_id,
-                                          form_id, form_data, user_id, group_id)
+                                          form_id, form_data, user_id)
 
 
 
@@ -204,6 +204,20 @@ def dataset_keys(request, conn=None, **kwargs):
             })
 
     print forms
+
+    # TODO Handle this in a single query, also without having to iterate pairs
+    for form in forms:
+        anno = utils.getFormData(conn, 'Dataset', dataset_id, form['form_id'])
+
+        if anno:
+            for pair in anno.getMapValue():
+                if pair.name == 'form_json':
+                    form['form_data'] = pair.value
+                    print 'found form data'
+                    break
+
+    # for e in qs.projection(q, params, service_opts):
+    #     if
 
     # form = """
     # {
