@@ -2,13 +2,13 @@ from django.http import (HttpResponse, HttpResponseNotAllowed,
                          HttpResponseBadRequest)
 
 from omeroweb.webclient.decorators import login_required, render_response
-from omeroweb.http import HttpJsonResponse
+from django.http import HttpResponse
 
 import omero
 from omero.rtypes import rstring, rlong, wrap, unwrap
 
 from copy import deepcopy
-import datetime
+from datetime import datetime
 
 from omeroweb.webclient import tree
 
@@ -20,6 +20,15 @@ logger = logging.getLogger(__name__)
 from . import settings
 from . import utils
 
+
+class HttpJsonResponse(HttpResponse):
+    def __init__(self, content, cls=json.JSONEncoder.default):
+        HttpResponse.__init__(
+            self, json.dumps(content, cls=cls),
+            content_type="application/json"
+        )
+
+
 @login_required(setGroupContext=True)
 def update(request, conn=None, **kwargs):
 
@@ -28,35 +37,30 @@ def update(request, conn=None, **kwargs):
 
     update_data = json.loads(request.body)
 
-    print update_data
-
     form_id = update_data['formId']
     form_data = update_data['formData']
-    object_type = "Dataset"
-    object_id = update_data['datasetId']
-    changed_at = datetime.datetime.now()
-    user_id = conn.user.getName()
-
+    obj_type = 'Dataset'
+    obj_id = update_data['datasetId']
+    changed_at = datetime.now()
+    changed_by = conn.user.getName()
 
     group_id = request.session.get('active_group')
     if group_id is None:
         group_id = conn.getEventContext().groupId
 
-    # print form_id
-    # print form_data
-    # print changed_at
-    # print user_id
-    # print group_id
-
-    # print type(form_data)
-
     # Create a super user connection
     su_conn = conn.clone()
+    # TODO Unhardcode this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     su_conn.setIdentity(
-        settings.OMERO_FORMS_PRIV_USER,
+        # settings.OMERO_FORMS_PRIV_USER,
+        'formmaster',
         settings.OMERO_FORMS_PRIV_PASSWORD
     )
     su_conn.connect()
+
+    if not su_conn.connect():
+        # TODO Throw Exception
+        pass
 
     # TODO Check that the form submitted is valid for the group it is being
     # submitted for
@@ -64,55 +68,11 @@ def update(request, conn=None, **kwargs):
     # TODO Check that the user is a member of the current group and that the
     # dataset is in that group
 
-    # Set the group to the current group
-    su_conn.SERVICE_OPTS.setOmeroGroup(group_id)
-
-    utils.addOrUpdateObjectMapAnnotation(su_conn, object_type, object_id,
-                                         form_id, form_data)
-
-
-    # TODO Save the JSON form data to the history location, wherever that is
-    #   json-data
-    #   timestamp of change
-    #   author of change
-    utils.addOrUpdateHistoryMapAnnotation(su_conn, object_type, object_id,
-                                          form_id, form_data, user_id)
-
-
-
-    # images = json.loads(request.body)
-    #
-    # additions = []
-    # removals = []
-    #
-    # for image in images:
-    #     image_id = image['imageId']
-    #
-    #     additions.extend(
-    #         [
-    #             (long(image_id), long(addition),)
-    #             for addition in image['additions']
-    #         ]
-    #     )
-    #
-    #     removals.extend(
-    #         [
-    #             (long(image_id), long(removal),)
-    #             for removal in image['removals']
-    #         ]
-    #     )
-    #
-    # # TODO Interface for createTagAnnotationsLinks is a bit nasty, but go
-    # # along with it for now
-    # createTagAnnotationsLinks(conn, additions, removals)
+    utils.add_form_data(su_conn, settings.OMERO_FORMS_PRIV_UID, form_id,
+                        obj_type, obj_id, form_data, changed_by, changed_at)
 
     return HttpResponse('')
 
-# def _marshal_image(conn, row, tags_on_images):
-#     image = tree._marshal_image(conn, row[0:5])
-#     image['clientPath'] = unwrap(row[5])
-#     image['tags'] = tags_on_images.get(image['id']) or []
-#     return image
 
 @login_required(setGroupContext=True)
 def dataset_keys(request, conn=None, **kwargs):
@@ -137,119 +97,45 @@ def dataset_keys(request, conn=None, **kwargs):
     if group_id is None:
         group_id = conn.getEventContext().groupId
 
-    # Details about the annotations specified
-    params = omero.sys.ParametersI()
-    service_opts = deepcopy(conn.SERVICE_OPTS)
-
     # Set the desired group context
-    service_opts.setOmeroGroup(group_id)
+    # TODO Test when this takes hold if at all?
+    # conn.SERVICE_OPTS.setOmeroGroup(group_id)
 
-    params.add('did', wrap(dataset_id))
-    # params.add('gid', wrap(group_id))
-    params.add('oname', wrap(settings.OMERO_FORMS_PRIV_USER))
+    su_conn = conn.clone()
 
-    qs = conn.getQueryService()
+    # TODO Unhardcode this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    su_conn.setIdentity(
+        # settings.OMERO_FORMS_PRIV_UID,
+        'formmaster',
+        settings.OMERO_FORMS_PRIV_PASSWORD
+    )
 
-    # Get the key-values that are applied to this dataset by the form master
-    q = """
-        SELECT anno
-        FROM Dataset dataset
-        JOIN dataset.annotationLinks links
-        JOIN links.child anno
-        JOIN anno.details details
-        WHERE anno.class = MapAnnotation
-        AND dataset.id = :did
-        AND details.owner.omeName = :oname
-        """
-# JOIN anno.mapValue mapValues
-# AND mapValues.name = 'group_form'
+    if not su_conn.connect():
+        # TODO Throw Exception
+        pass
 
-    annotations = []
-    for e in qs.projection(q, params, service_opts):
-        anno = e[0].val
-        kvs = {}
-        for pair in anno.getMapValue():
-            # print '\t%s = %s' % (pair.name, pair.value)
-            kvs[pair.name] = pair.value
-        annotations.append(kvs)
+    forms = [
+        {
+            'formId': form['form_id'],
+            'formSchema': form['form_schema'],
+            'groupIds': form['group_ids']
+        }
+        for form
+        in utils.list_forms(su_conn, settings.OMERO_FORMS_PRIV_UID, group_id)
+    ]
 
-    # Get the forms available to users of this group
-    q = """
-        SELECT anno
-        FROM ExperimenterGroup grp
-        JOIN grp.annotationLinks links
-        JOIN links.child anno
-        JOIN anno.details details
-        WHERE anno.class = MapAnnotation
-        AND details.owner.omeName = :oname
-        """
-        # JOIN anno.mapValue mapValues
-        # AND mapValues.name = 'form_json'
-
-    forms = []
-    for e in qs.projection(q, params, service_opts):
-        anno = e[0].val
-        form_json = None
-        form_id = None
-        for pair in anno.getMapValue():
-            if pair.name == 'form_json':
-                form_json = pair.value
-            if pair.name == 'form_id':
-                form_id = pair.value
-
-        if form_json is not None and form_id is not None:
-            forms.append({
-                'form_id': form_id,
-                'form_json': form_json
-            })
-
-    print forms
-
-    # TODO Handle this in a single query, also without having to iterate pairs
+    # # TODO Handle this in a single query?
     for form in forms:
-        anno = utils.getFormData(conn, 'Dataset', dataset_id, form['form_id'])
-
-        if anno:
-            for pair in anno.getMapValue():
-                if pair.name == 'form_json':
-                    form['form_data'] = pair.value
-                    print 'found form data'
-                    break
-
-    # for e in qs.projection(q, params, service_opts):
-    #     if
-
-    # form = """
-    # {
-    #     "title": "Science stuff",
-    #     "type": "object",
-    #     "required": ["project", "someNumber"],
-    #     "properties": {
-    #       "project": {"type": "string", "title": "Project"},
-    #       "something": {"type": "boolean", "title": "Something?", "default": false},
-    #       "someNumber": {"type": "number", "title": "Some number"}
-    #     }
-    # }
-    # """
-    #
-    # forms = [form]
-
-    # print('User is: %s' % settings.OMERO_FORMS_PRIV_USER)
-    # print('Password is: %s' % settings.OMERO_FORMS_PRIV_PASSWORD)
-
-    # Test: Create a super user connection
-    # su_conn = conn.clone()
-    # su_conn.setIdentity(
-    #     settings.OMERO_FORMS_PRIV_USER,
-    #     settings.OMERO_FORMS_PRIV_PASSWORD
-    # )
-    # if not su_conn.connect():
-    #     print('Not Connected')
-    #check su function
+        form_data = utils.get_form_data(
+            su_conn, settings.OMERO_FORMS_PRIV_UID, form['formId'],
+            'Dataset', dataset_id
+        )
+        if form_data is not None:
+            form['formData'] = form_data['form_data']
 
     return HttpJsonResponse(
         {
-            'annotations': annotations,
             'forms': forms
-        }
+        },
+        cls=utils.DatetimeEncoder
     )

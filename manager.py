@@ -1,6 +1,9 @@
 from omero_basics import OMEROConnectionManager
 import omero
 from copy import deepcopy
+from pprint import pprint
+from datetime import datetime
+import json
 
 conn_manager = OMEROConnectionManager()
 conn = conn_manager.connect()
@@ -323,7 +326,7 @@ conn = conn_manager.connect()
 # Add a key-value to the group
 form1 = """
 {
-    "title": "Science stuff",
+    "title": "Form One",
     "type": "object",
     "required": ["project", "someNumber"],
     "properties": {
@@ -345,6 +348,12 @@ form2 = """
 }
 """
 
+form1_data  = json.dumps({
+    'project': 'My first project',
+    'something': True,
+    'someNumber': 12345
+})
+
 # listForms()
 # listForms(103)
 # addForm(form1, "science_stuff1", 203)
@@ -364,5 +373,40 @@ form2 = """
 # for x in [340, 301, 329]:
     # deleteOther(x)
 
-# from . import utils
-# utils.add_form()
+import utils
+
+master_user_id = 252L
+form_id = 'form1'
+form_schema = form1
+group_ids = [203L]
+
+# Add a form
+# utils.add_form(conn, master_user_id, form_id, form_schema, group_ids)
+
+# List all the forms
+# for form in utils.list_forms(conn, master_user_id):
+#     pprint(form)
+
+# List all the forms in a group
+# for form in utils.list_forms(conn, master_user_id, 203L):
+#     pprint(form)
+
+# Get a form
+# pprint(utils.get_form(conn, master_user_id, form_id))
+
+# utils.delete_form(conn, master_user_id, form_id)
+
+# Add data for a form
+# utils.add_form_data(conn, master_user_id, form_id, 'Dataset', 251L,
+#                     form1_data, 'rou', datetime.now())
+
+# Get data for a form
+for form_data in utils.get_form_data_history(conn, master_user_id, form_id,
+                                             'Dataset', 251L):
+    pprint(form_data)
+
+# Get latest data for a form
+# pprint(utils.get_form_data(conn, master_user_id, form_id, 'Dataset', 251L))
+
+# Delete data for a form
+# utils.delete_form_data(conn, master_user_id, form_id, 'Dataset', 251L)

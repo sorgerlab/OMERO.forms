@@ -4,10 +4,15 @@ import ReactDOM from 'react-dom';
 import Form from "react-jsonschema-form";
 
 function compareFormData(d1, d2) {
+  // No previous data
+  if (d2 === undefined) {
+    return false;
+  }
+
+  // Previous data, compare values
   for (var key in d1) {
       if (d1.hasOwnProperty(key)) {
         if (d1[key] !== d2[key]) {
-          console.log('' + d1[key] + ' - ' + d2[key]);
           return false;
         }
       }
@@ -47,26 +52,25 @@ export default class Forms extends React.Component {
     });
 
     loadRequest.done(jsonData => {
-      console.log(jsonData);
 
       let forms = {};
       jsonData.forms.forEach(form => {
 
         let formData;
-        if (form.hasOwnProperty('form_data')) {
-          formData = JSON.parse(form.form_data);
+        if (form.hasOwnProperty('formData')) {
+          formData = form.formData;
         }
 
-        forms[form.form_id] = {
-          form_id: form.form_id,
-          form_schema: JSON.parse(form.form_json),
-          form_data: formData
+        forms[form.formId] = {
+          formId: form.formId,
+          formSchema: JSON.parse(form.formSchema),
+          formData: formData
         }
       });
 
       let activeFormId = undefined;
       if (jsonData.forms.length == 1) {
-        activeFormId = jsonData.forms[0].form_id;
+        activeFormId = jsonData.forms[0].formId;
       }
 
       this.setState({
@@ -100,7 +104,7 @@ export default class Forms extends React.Component {
       data: JSON.stringify(updateForm),
       success: function(data) {
         const form = this.state.forms[updateForm.formId];
-        form.form_data = updateForm.formData
+        form.formData = updateForm.formData
         this.setState({
           forms: this.state.forms
         })
@@ -149,8 +153,8 @@ export default class Forms extends React.Component {
 
       form = (
         <Form
-          schema={ activeForm.form_schema }
-          formData = { activeForm.form_data }
+          schema={ activeForm.formSchema }
+          formData = { activeForm.formData }
           onSubmit={ this.submitForm }
         />
       )
