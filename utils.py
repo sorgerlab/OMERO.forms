@@ -298,7 +298,6 @@ def _get_form_data(conn, master_user_id, form_id, obj_type, obj_id):
         FROM Experimenter user
         JOIN user.annotationLinks links
         JOIN links.child anno
-        JOIN anno.details details
         WHERE anno.class = MapAnnotation
         AND user.id = :mid
         AND anno.ns = :ns
@@ -413,3 +412,116 @@ def delete_form_data(conn, master_user_id, form_id, obj_type, obj_id):
         pass
         # print cb.getResponse()
     cb.close(True)
+
+
+def _get_object(conn, obj_type, obj_id):
+    """
+    Get an object of the specified type and id
+
+    Returns a <ObjType>I object or None
+    """
+
+    params = omero.sys.ParametersI()
+    params.add('oid', omero.rtypes.wrap(long(obj_id)))
+
+    qs = conn.getQueryService()
+    q = """
+        SELECT obj
+        FROM %s obj
+        WHERE obj.id = :oid
+        """ % obj_type
+
+    rows = qs.projection(q, params, conn.SERVICE_OPTS)
+
+    # TODO Throw Exception
+    assert len(rows) <= 1
+
+    if len(rows) == 0:
+        return None
+
+    return rows[0][0].val
+
+
+def _get_form_kvdata(conn, form_id, obj_type, obj_id):
+    """
+    Get the form data associated with a particular form for a particular
+    object.
+
+    Returns a MapAnnotationI object or None
+    """
+
+    namespace = 'hms.harvard.edu/omero/forms/kvdata/%s' % form_id
+
+    params = omero.sys.ParametersI()
+    params.add('oid', omero.rtypes.wrap(long(obj_id)))
+    params.add('ns', omero.rtypes.wrap(namespace))
+
+    qs = conn.getQueryService()
+    q = """
+        SELECT anno
+        FROM %s obj
+        JOIN obj.annotationLinks links
+        JOIN links.child anno
+        WHERE anno.class = MapAnnotation
+        AND obj.id = :oid
+        AND anno.ns = :ns
+        """ % obj_type
+
+    rows = qs.projection(q, params, conn.SERVICE_OPTS)
+
+    # TODO Throw Exception
+    assert len(rows) <= 1
+
+    if len(rows) == 0:
+        return None
+
+    return rows[0][0].val
+
+
+def add_form_data_to_obj(conn, form_id, obj_type, obj_id, data):
+    """
+    Get the key-values from the data and attach this to the object
+    for conveniance
+    """
+
+    namespace = 'hms.harvard.edu/omero/forms/kvdata/%s' % form_id
+
+    # Extract key values from form data
+    kvs = [[str(k), str(v)] for k, v in json.loads(data).iteritems()]
+
+    # If the appropriate annotation already exists, update it
+    anno = _get_form_kvdata(conn, form_id, obj_type, obj_id)
+    if anno is not None:
+
+        anno.setMapValue([omero.model.NamedValue(k, v) for k, v in kvs])
+
+        us = conn.getUpdateService()
+        us.saveObject(anno, conn.SERVICE_OPTS)
+
+    # If it does not already exist, create a new one
+    else:
+
+        mapAnn = omero.gateway.MapAnnotationWrapper(conn)
+        mapAnn.setNs(namespace)
+        mapAnn.setValue(kvs)
+        mapAnn.save()
+
+        if obj_type == 'Project':
+            link = omero.model.ProjectAnnotationLinkI()
+            link.parent = omero.model.ProjectI(obj_id, False)
+        elif obj_type == 'Dataset':
+            link = omero.model.DatasetAnnotationLinkI()
+            link.parent = omero.model.DatasetI(obj_id, False)
+        elif obj_type == 'Image':
+            link = omero.model.ImageAnnotationLinkI()
+            link.parent = omero.model.ImageI(obj_id, False)
+        elif obj_type == 'Screen':
+            link = omero.model.ScreenAnnotationLinkI()
+            link.parent = omero.model.ScreenI(obj_id, False)
+        elif obj_type == 'Plate':
+            link = omero.model.PlateAnnotationLinkI()
+            link.parent = omero.model.PlateI(obj_id, False)
+        link.child = mapAnn._obj
+
+        update = conn.getUpdateService()
+        update.saveObject(link, conn.SERVICE_OPTS)

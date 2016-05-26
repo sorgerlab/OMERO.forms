@@ -71,6 +71,10 @@ def update(request, conn=None, **kwargs):
     utils.add_form_data(su_conn, settings.OMERO_FORMS_PRIV_UID, form_id,
                         obj_type, obj_id, form_data, changed_by, changed_at)
 
+    print type(form_data)
+
+    utils.add_form_data_to_obj(conn, form_id, obj_type, obj_id, form_data)
+
     return HttpResponse('')
 
 
