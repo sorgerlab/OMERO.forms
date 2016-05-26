@@ -58,7 +58,7 @@ export default class Forms extends React.Component {
 
         let formData;
         if (form.hasOwnProperty('formData')) {
-          formData = form.formData;
+          formData = JSON.parse(form.formData);
         }
 
         forms[form.formId] = {
@@ -92,7 +92,7 @@ export default class Forms extends React.Component {
     }
 
     let updateForm = {
-      'formData': formDataSubmission.formData,
+      'formData': JSON.stringify(formDataSubmission.formData),
       'formId': this.state.activeFormId,
       'datasetId': this.props.datasetId
     };
@@ -104,7 +104,7 @@ export default class Forms extends React.Component {
       data: JSON.stringify(updateForm),
       success: function(data) {
         const form = this.state.forms[updateForm.formId];
-        form.formData = updateForm.formData
+        form.formData = formDataSubmission.formData
         this.setState({
           forms: this.state.forms
         })

@@ -19799,7 +19799,7 @@ var omeroforms =
 
 	          var formData = void 0;
 	          if (form.hasOwnProperty('formData')) {
-	            formData = form.formData;
+	            formData = JSON.parse(form.formData);
 	          }
 
 	          forms[form.formId] = {
@@ -19830,7 +19830,7 @@ var omeroforms =
 	      }
 
 	      var updateForm = {
-	        'formData': formDataSubmission.formData,
+	        'formData': (0, _stringify2.default)(formDataSubmission.formData),
 	        'formId': this.state.activeFormId,
 	        'datasetId': this.props.datasetId
 	      };
@@ -19842,7 +19842,7 @@ var omeroforms =
 	        data: (0, _stringify2.default)(updateForm),
 	        success: function (data) {
 	          var form = this.state.forms[updateForm.formId];
-	          form.formData = updateForm.formData;
+	          form.formData = formDataSubmission.formData;
 	          this.setState({
 	            forms: this.state.forms
 	          });

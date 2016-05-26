@@ -525,3 +525,28 @@ def add_form_data_to_obj(conn, form_id, obj_type, obj_id, data):
 
         update = conn.getUpdateService()
         update.saveObject(link, conn.SERVICE_OPTS)
+
+
+def delete_form_kvdata(conn, form_id, obj_type, obj_id):
+    """
+    Delete the form key-value data annotation for the specified object type
+    and id
+    """
+
+    anno = _get_form_kvdata(conn, form_id, obj_type, obj_id)
+
+    if anno is None:
+        # TODO Throw exception or something to indicate nothing to delete?
+        return
+
+    handle = conn.deleteObjects('MapAnnotation', [anno.id.val])
+    cb = omero.callbacks.CmdCallbackI(conn.c, handle)
+
+    while not cb.block(500):
+        pass
+    err = isinstance(cb.getResponse(), omero.cmd.ERR)
+    if err:
+        # TODO Throw exception
+        pass
+        # print cb.getResponse()
+    cb.close(True)

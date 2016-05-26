@@ -65,9 +65,9 @@ group_ids = [203L]
 #                     form1_data, 'rou', datetime.now())
 
 # Get data for a form
-# for form_data in utils.get_form_data_history(conn, master_user_id, form_id,
-#                                              'Dataset', 251L):
-#     print(form_data)
+for form_data in utils.get_form_data_history(conn, master_user_id, form_id,
+                                             'Dataset', 251L):
+    print(form_data)
 
 # Get latest data for a form
 # pprint(utils.get_form_data(conn, master_user_id, form_id, 'Dataset', 251L))
@@ -75,4 +75,6 @@ group_ids = [203L]
 # Delete data for a form
 # utils.delete_form_data(conn, master_user_id, form_id, 'Dataset', 251L)
 
-utils.add_form_data_to_obj(conn, form_id, 'Dataset', 251L, form1_data)
+# utils.add_form_data_to_obj(conn, form_id, 'Dataset', 251L, form1_data)
+
+# utils.delete_form_kvdata(conn, form_id, 'Dataset', 251L)
