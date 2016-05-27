@@ -36,12 +36,24 @@ export default class Forms extends React.Component {
   }
 
   componentDidMount() {
-    this.loadFromServer(this.props.datasetId, 1);
+    this.loadFromServer(this.props.datasetId);
   }
 
-  loadFromServer(datasetId, groupId) {
+  componentWillReceiveProps(nextProps) {
+    // If the dataset selected has changed, reload
+    if (nextProps.datasetId !== this.props.datasetId) {
+      this.loadFromServer(nextProps.datasetId);
+      // Bail out as a reload was required and done
+      return;
+    }
+
+  }
+
+  loadFromServer(datasetId) {
 
     console.log('Loading from server');
+
+    console.log(datasetId);
 
     let loadRequest = $.ajax({
       url: this.props.urlDatasetKeys,
@@ -52,6 +64,8 @@ export default class Forms extends React.Component {
     });
 
     loadRequest.done(jsonData => {
+
+      console.log(jsonData);
 
       let forms = {};
       jsonData.forms.forEach(form => {

@@ -10,10 +10,8 @@ $(function() {
   var urlDatasetKeys="{% url 'omeroforms_dataset_keys' %}";
   var urlUpdate="{% url 'omeroforms_update' %}";
 
-
   var reactRender = function(datatree, selectedNode) {
     var datasetId = selectedNode.data.obj.id;
-    var randomShit = "foobar";
 
     omeroforms.default(datasetId, urlDatasetKeys, urlUpdate);
 

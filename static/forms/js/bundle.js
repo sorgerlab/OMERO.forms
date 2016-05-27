@@ -19775,14 +19775,26 @@ var omeroforms =
 	  (0, _createClass3.default)(Forms, [{
 	    key: 'componentDidMount',
 	    value: function componentDidMount() {
-	      this.loadFromServer(this.props.datasetId, 1);
+	      this.loadFromServer(this.props.datasetId);
+	    }
+	  }, {
+	    key: 'componentWillReceiveProps',
+	    value: function componentWillReceiveProps(nextProps) {
+	      // If the dataset selected has changed, reload
+	      if (nextProps.datasetId !== this.props.datasetId) {
+	        this.loadFromServer(nextProps.datasetId);
+	        // Bail out as a reload was required and done
+	        return;
+	      }
 	    }
 	  }, {
 	    key: 'loadFromServer',
-	    value: function loadFromServer(datasetId, groupId) {
+	    value: function loadFromServer(datasetId) {
 	      var _this2 = this;
 
 	      console.log('Loading from server');
+
+	      console.log(datasetId);
 
 	      var loadRequest = $.ajax({
 	        url: this.props.urlDatasetKeys,
@@ -19793,6 +19805,8 @@ var omeroforms =
 	      });
 
 	      loadRequest.done(function (jsonData) {
+
+	        console.log(jsonData);
 
 	        var forms = {};
 	        jsonData.forms.forEach(function (form) {
