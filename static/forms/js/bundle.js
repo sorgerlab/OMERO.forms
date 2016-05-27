@@ -19739,7 +19739,7 @@ var omeroforms =
 	function compareFormData(d1, d2) {
 	  // No previous data
 	  if (d2 === undefined) {
-	    return false;
+	    return true;
 	  }
 
 	  // Previous data, compare values
@@ -19792,10 +19792,6 @@ var omeroforms =
 	    value: function loadFromServer(datasetId) {
 	      var _this2 = this;
 
-	      console.log('Loading from server');
-
-	      console.log(datasetId);
-
 	      var loadRequest = $.ajax({
 	        url: this.props.urlDatasetKeys,
 	        type: "GET",
@@ -19805,8 +19801,6 @@ var omeroforms =
 	      });
 
 	      loadRequest.done(function (jsonData) {
-
-	        console.log(jsonData);
 
 	        var forms = {};
 	        jsonData.forms.forEach(function (form) {
@@ -19839,7 +19833,7 @@ var omeroforms =
 	    value: function submitForm(formDataSubmission) {
 
 	      // If there are no changes, bail out as there is nothing to be done
-	      if (compareFormData(formDataSubmission.formData, this.state.forms[this.state.activeFormId].form_data)) {
+	      if (compareFormData(formDataSubmission.formData, this.state.forms[this.state.activeFormId].formData)) {
 	        return;
 	      }
 
@@ -19860,6 +19854,7 @@ var omeroforms =
 	          this.setState({
 	            forms: this.state.forms
 	          });
+	          $("body").trigger("selection_change.ome");
 	        }.bind(this),
 	        error: function (xhr, status, err) {
 	          console.error(this.props.url, status, err.toString());

@@ -6,7 +6,7 @@ import Form from "react-jsonschema-form";
 function compareFormData(d1, d2) {
   // No previous data
   if (d2 === undefined) {
-    return false;
+    return true;
   }
 
   // Previous data, compare values
@@ -51,10 +51,6 @@ export default class Forms extends React.Component {
 
   loadFromServer(datasetId) {
 
-    console.log('Loading from server');
-
-    console.log(datasetId);
-
     let loadRequest = $.ajax({
       url: this.props.urlDatasetKeys,
       type: "GET",
@@ -64,8 +60,6 @@ export default class Forms extends React.Component {
     });
 
     loadRequest.done(jsonData => {
-
-      console.log(jsonData);
 
       let forms = {};
       jsonData.forms.forEach(form => {
@@ -100,7 +94,7 @@ export default class Forms extends React.Component {
     // If there are no changes, bail out as there is nothing to be done
     if (compareFormData(
       formDataSubmission.formData,
-      this.state.forms[this.state.activeFormId].form_data
+      this.state.forms[this.state.activeFormId].formData
     )) {
       return;
     }
@@ -122,6 +116,7 @@ export default class Forms extends React.Component {
         this.setState({
           forms: this.state.forms
         })
+        $("body").trigger("selection_change.ome");
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
