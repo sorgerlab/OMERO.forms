@@ -1,11 +1,13 @@
 #omero_forms_panel .control-label {
     font-weight: bold;
-    font-size: 15px;
+    font-size: 12px;
+    line-height: 2em;
 }
 
 #omero_forms_panel .checkbox {
     font-weight: bold;
-    font-size: 15px;
+    font-size: 12px;
+    line-height: 2em;
 }
 
 #omero_forms_panel legend {

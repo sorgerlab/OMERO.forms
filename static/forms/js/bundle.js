@@ -29649,7 +29649,7 @@ var omeroforms =
 
 
 	// module
-	exports.push([module.id, "#omero_forms_panel .checkbox,#omero_forms_panel .control-label,#omero_forms_panel legend{font-weight:700;font-size:15px}", ""]);
+	exports.push([module.id, "#omero_forms_panel .checkbox,#omero_forms_panel .control-label{font-weight:700;font-size:12px;line-height:2em}#omero_forms_panel legend{font-weight:700;font-size:15px}", ""]);
 
 	// exports
 
