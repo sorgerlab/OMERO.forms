@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 import Form from "react-jsonschema-form";
+import './forms.css';
 
 function compareFormData(d1, d2) {
   // No previous data
@@ -151,7 +152,7 @@ export default class Forms extends React.Component {
     for (var key in this.state.forms) {
         if (this.state.forms.hasOwnProperty(key)) {
           formChoices.push(
-            <li key={ key } onClick={ this.switchForm.bind(this, key) }>{ key }</li>
+            <li className="omero_forms_list" key={ key } onClick={ this.switchForm.bind(this, key) }>{ key }</li>
           );
         }
     }
@@ -169,12 +170,14 @@ export default class Forms extends React.Component {
       )
     }
 
-
+    // Show list of available forms
+    // <p>
+    //   <ul>{ formChoices }</ul>
+    // </p>
 
     return (
       (
         <div>
-          <ul>{ formChoices }</ul>
           { form }
         </div>
 
