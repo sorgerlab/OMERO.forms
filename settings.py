@@ -3,11 +3,11 @@
 
 # https://www.openmicroscopy.org/site/support/omero5.2/developers/Web/CreateApp.html
 CUSTOM_SETTINGS_MAPPINGS = {
-    "omero.web.forms.priv.uid": [
-        "OMERO_FORMS_PRIV_UID",
+    "omero.web.forms.priv.user": [
+        "OMERO_FORMS_PRIV_USER",
         None,
-        long,
-        "The priviledged user id to be used for storing key-values"
+        str,
+        "The priviledged username to be used for storing key-values"
     ],
     "omero.web.forms.priv.password": [
         "OMERO_FORMS_PRIV_PASSWORD",

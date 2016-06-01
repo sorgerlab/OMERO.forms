@@ -20,6 +20,37 @@ logger = logging.getLogger(__name__)
 from . import settings
 from . import utils
 
+OMERO_FORMS_PRIV_UID = None
+
+
+def get_priv_uid(conn):
+    if OMERO_FORMS_PRIV_UID is not None:
+        return OMERO_FORMS_PRIV_UID
+
+    qs = conn.getQueryService()
+
+    params = omero.sys.ParametersI()
+    params.add(
+        'username',
+        omero.rtypes.wrap(str(settings.OMERO_FORMS_PRIV_USER))
+    )
+
+    # Get all the annotations attached to the form master user
+    q = """
+        SELECT user.id
+        FROM Experimenter user
+        WHERE user.omeName = :username
+        """
+
+    rows = qs.projection(q, params, conn.SERVICE_OPTS)
+    assert len(rows) == 1
+
+    global OMERO_FORMS_PRIV_UID
+    OMERO_FORMS_PRIV_UID = rows[0][0].val
+
+    return OMERO_FORMS_PRIV_UID
+
+
 
 class HttpJsonResponse(HttpResponse):
     def __init__(self, content, cls=json.JSONEncoder.default):
@@ -50,10 +81,8 @@ def update(request, conn=None, **kwargs):
 
     # Create a super user connection
     su_conn = conn.clone()
-    # TODO Unhardcode this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     su_conn.setIdentity(
-        # settings.OMERO_FORMS_PRIV_USER,
-        'formmaster',
+        settings.OMERO_FORMS_PRIV_USER,
         settings.OMERO_FORMS_PRIV_PASSWORD
     )
     su_conn.connect()
@@ -68,7 +97,7 @@ def update(request, conn=None, **kwargs):
     # TODO Check that the user is a member of the current group and that the
     # dataset is in that group
 
-    utils.add_form_data(su_conn, settings.OMERO_FORMS_PRIV_UID, form_id,
+    utils.add_form_data(su_conn, get_priv_uid(conn), form_id,
                         obj_type, obj_id, form_data, changed_by, changed_at)
 
     utils.add_form_data_to_obj(conn, form_id, obj_type, obj_id, form_data)
@@ -105,10 +134,8 @@ def dataset_keys(request, conn=None, **kwargs):
 
     su_conn = conn.clone()
 
-    # TODO Unhardcode this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     su_conn.setIdentity(
-        # settings.OMERO_FORMS_PRIV_UID,
-        'formmaster',
+        settings.OMERO_FORMS_PRIV_USER,
         settings.OMERO_FORMS_PRIV_PASSWORD
     )
 
@@ -123,13 +150,13 @@ def dataset_keys(request, conn=None, **kwargs):
             'groupIds': form['group_ids']
         }
         for form
-        in utils.list_forms(su_conn, settings.OMERO_FORMS_PRIV_UID, group_id)
+        in utils.list_forms(su_conn, get_priv_uid(conn), group_id)
     ]
 
     # # TODO Handle this in a single query?
     for form in forms:
         form_data = utils.get_form_data(
-            su_conn, settings.OMERO_FORMS_PRIV_UID, form['formId'],
+            su_conn, get_priv_uid(conn), form['formId'],
             'Dataset', dataset_id
         )
         if form_data is not None:
