@@ -24,6 +24,7 @@ OMERO_FORMS_PRIV_UID = None
 
 
 def get_priv_uid(conn):
+    global OMERO_FORMS_PRIV_UID
     if OMERO_FORMS_PRIV_UID is not None:
         return OMERO_FORMS_PRIV_UID
 
@@ -35,7 +36,6 @@ def get_priv_uid(conn):
         omero.rtypes.wrap(str(settings.OMERO_FORMS_PRIV_USER))
     )
 
-    # Get all the annotations attached to the form master user
     q = """
         SELECT user.id
         FROM Experimenter user
@@ -45,11 +45,8 @@ def get_priv_uid(conn):
     rows = qs.projection(q, params, conn.SERVICE_OPTS)
     assert len(rows) == 1
 
-    global OMERO_FORMS_PRIV_UID
     OMERO_FORMS_PRIV_UID = rows[0][0].val
-
     return OMERO_FORMS_PRIV_UID
-
 
 
 class HttpJsonResponse(HttpResponse):
@@ -146,7 +143,8 @@ def dataset_keys(request, conn=None, **kwargs):
     forms = [
         {
             'formId': form['form_id'],
-            'formSchema': form['form_schema'],
+            'jsonSchema': form['json_schema'],
+            'uiSchema': form['ui_schema'],
             'groupIds': form['group_ids']
         }
         for form

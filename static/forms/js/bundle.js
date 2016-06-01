@@ -19814,7 +19814,8 @@ var omeroforms =
 
 	          forms[form.formId] = {
 	            formId: form.formId,
-	            formSchema: JSON.parse(form.formSchema),
+	            jsonSchema: JSON.parse(form.jsonSchema),
+	            uiSchema: JSON.parse(form.uiSchema),
 	            formData: formData
 	          };
 	        });
@@ -19822,7 +19823,10 @@ var omeroforms =
 	        var activeFormId = undefined;
 	        if (jsonData.forms.length == 1) {
 	          activeFormId = jsonData.forms[0].formId;
-	        }
+	          // TODO Remove, temporary test
+	        } else {
+	            activeFormId = jsonData.forms[1].formId;
+	          }
 
 	        _this2.setState({
 	          forms: forms,
@@ -19905,7 +19909,8 @@ var omeroforms =
 	        var activeForm = this.state.forms[this.state.activeFormId];
 
 	        form = _react2.default.createElement(_reactJsonschemaForm2.default, {
-	          schema: activeForm.formSchema,
+	          schema: activeForm.jsonSchema,
+	          uiSchema: activeForm.uiSchema,
 	          formData: activeForm.formData,
 	          onSubmit: this.submitForm
 	        });

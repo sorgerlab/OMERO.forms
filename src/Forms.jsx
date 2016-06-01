@@ -72,7 +72,8 @@ export default class Forms extends React.Component {
 
         forms[form.formId] = {
           formId: form.formId,
-          formSchema: JSON.parse(form.formSchema),
+          jsonSchema: JSON.parse(form.jsonSchema),
+          uiSchema: JSON.parse(form.uiSchema),
           formData: formData
         }
       });
@@ -80,6 +81,9 @@ export default class Forms extends React.Component {
       let activeFormId = undefined;
       if (jsonData.forms.length == 1) {
         activeFormId = jsonData.forms[0].formId;
+      // TODO Remove, temporary test
+      } else {
+        activeFormId = jsonData.forms[1].formId;
       }
 
       this.setState({
@@ -163,8 +167,9 @@ export default class Forms extends React.Component {
 
       form = (
         <Form
-          schema={ activeForm.formSchema }
-          formData = { activeForm.formData }
+          schema={ activeForm.jsonSchema }
+          uiSchema={ activeForm.uiSchema }
+          formData={ activeForm.formData }
           onSubmit={ this.submitForm }
         />
       )

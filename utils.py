@@ -21,7 +21,8 @@ class DatetimeEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def add_form(conn, master_user_id, form_id, form_schema, group_ids=[]):
+def add_form(conn, master_user_id, form_id, json_schema, ui_schema,
+             group_ids=[]):
     """
     Add a form to the form master user and mark it for use in the designated
     groups.
@@ -57,7 +58,8 @@ def add_form(conn, master_user_id, form_id, form_schema, group_ids=[]):
 
     # Basic form data
     keyValueData = [
-        ["form_schema", form_schema],
+        ["json_schema", json_schema],
+        ["ui_schema", ui_schema],
         ["form_id", form_id]
     ]
 
@@ -125,7 +127,8 @@ def list_forms(conn, master_user_id, group_id=None):
     for row in rows:
 
         _form_id = None
-        _form_schema = None
+        _json_schema = None
+        _ui_schema = None
         _group_ids = []
 
         anno = row[0].val
@@ -133,18 +136,22 @@ def list_forms(conn, master_user_id, group_id=None):
         for kv in kvs:
             if kv.name == 'form_id':
                 _form_id = kv.value
-            elif kv.name == 'form_schema':
-                _form_schema = kv.value
+            elif kv.name == 'json_schema':
+                _json_schema = kv.value
+            elif kv.name == 'ui_schema':
+                _ui_schema = kv.value
             elif kv.name == 'group':
                 _group_ids.append(long(kv.value))
 
         # TODO Throw exception
         assert _form_id is not None
-        assert _form_schema is not None
+        assert _json_schema is not None
+        assert _ui_schema is not None
 
         yield {
             'form_id': _form_id,
-            'form_schema': _form_schema,
+            'json_schema': _json_schema,
+            'ui_schema': _ui_schema,
             'group_ids': _group_ids
         }
 
@@ -196,7 +203,8 @@ def get_form(conn, master_user_id, form_id):
         return None
 
     _form_id = None
-    _form_schema = None
+    _json_schema = None
+    _ui_schem = None
     _group_ids = []
 
 
@@ -204,19 +212,23 @@ def get_form(conn, master_user_id, form_id):
     for kv in kvs:
         if kv.name == 'form_id':
             _form_id = kv.value
-        elif kv.name == 'form_schema':
-            _form_schema = kv.value
+        elif kv.name == 'json_schema':
+            _json_schema = kv.value
+        elif kv.name == 'ui_schema':
+            _ui_schema = kv.value
         elif kv.name == 'group':
             _group_ids.append(long(kv.value))
 
     # TODO Throw exception
     assert _form_id is not None
-    assert _form_schema is not None
+    assert _json_schema is not None
+    assert _ui_schem is not None
     assert _form_id == form_id
 
     return {
         'form_id': _form_id,
-        'form_schema': _form_schema,
+        'json_schema': _json_schema,
+        'ui_schema': _ui_schem,
         'group_ids': _group_ids
     }
 

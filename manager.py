@@ -22,14 +22,50 @@ form1 = """
 }
 """
 
+ui1 = """
+{
+  "someNumber": {
+    "ui:widget": "updown"
+  }
+}
+"""
+
 form2 = """
 {
-    "title": "Second form",
-    "type": "object",
-    "required": ["project"],
-    "properties": {
-      "project": {"type": "string", "title": "Project2"}
+  "title": "Date and time widgets",
+  "type": "object",
+  "properties": {
+    "native": {
+      "title": "Native",
+      "description": "May not work on some browsers, notably Firefox Desktop and IE.",
+      "type": "object",
+      "properties": {
+        "datetime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "alternative": {
+      "title": "Alternative",
+      "description": "These work on every platform.",
+      "type": "object",
+      "properties": {
+        "alt-datetime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "alt-date": {
+          "type": "string",
+          "format": "date"
+        }
+      }
     }
+  }
 }
 """
 
@@ -42,10 +78,12 @@ form1_data = json.dumps({
 master_user_id = 252L
 form_id = 'form1'
 form_schema = form1
+ui_schema = ui1
 group_ids = [203L]
 
 # Add a form
-# utils.add_form(conn, master_user_id, form_id, form_schema, group_ids)
+# utils.add_form(conn, master_user_id, form_id, form_schema, ui_schema,
+#                group_ids)
 
 # List all the forms
 # for form in utils.list_forms(conn, master_user_id):
