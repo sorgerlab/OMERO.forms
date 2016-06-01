@@ -7,7 +7,7 @@ import './forms.css';
 function compareFormData(d1, d2) {
   // No previous data
   if (d2 === undefined) {
-    return true;
+    return false;
   }
 
   // Previous data, compare values

@@ -19734,14 +19734,14 @@ var omeroforms =
 
 	var _reactJsonschemaForm2 = _interopRequireDefault(_reactJsonschemaForm);
 
-	__webpack_require__(315);
+	__webpack_require__(296);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function compareFormData(d1, d2) {
 	  // No previous data
 	  if (d2 === undefined) {
-	    return true;
+	    return false;
 	  }
 
 	  // Previous data, compare values
@@ -29596,35 +29596,16 @@ var omeroforms =
 
 
 /***/ },
-/* 296 */,
-/* 297 */,
-/* 298 */,
-/* 299 */,
-/* 300 */,
-/* 301 */,
-/* 302 */,
-/* 303 */,
-/* 304 */,
-/* 305 */,
-/* 306 */,
-/* 307 */,
-/* 308 */,
-/* 309 */,
-/* 310 */,
-/* 311 */,
-/* 312 */,
-/* 313 */,
-/* 314 */,
-/* 315 */
+/* 296 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(316);
+	var content = __webpack_require__(297);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(318)(content, {});
+	var update = __webpack_require__(299)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -29641,10 +29622,10 @@ var omeroforms =
 	}
 
 /***/ },
-/* 316 */
+/* 297 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(317)();
+	exports = module.exports = __webpack_require__(298)();
 	// imports
 
 
@@ -29655,7 +29636,7 @@ var omeroforms =
 
 
 /***/ },
-/* 317 */
+/* 298 */
 /***/ function(module, exports) {
 
 	/*
@@ -29711,7 +29692,7 @@ var omeroforms =
 
 
 /***/ },
-/* 318 */
+/* 299 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*

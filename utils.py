@@ -2,6 +2,7 @@ from functools import wraps
 import omero
 import json
 from datetime import datetime
+import re
 
 # def as_form_master(f):
 #     @wraps(f)
@@ -312,6 +313,46 @@ def _get_form_data(conn, master_user_id, form_id, obj_type, obj_id):
         return None
 
     return rows[0][0].val
+
+
+def _list_form_data_orphans(conn, master_user_id):
+    """
+    Lists the form data associated with a particular form for a particular
+    object where the objects no longer exist
+
+    Returns a list of MapAnnotationI objects
+    """
+
+    namespace = 'hms.harvard.edu/omero/forms/data/%'
+
+    params = omero.sys.ParametersI()
+    params.add('mid', omero.rtypes.wrap(long(master_user_id)))
+    params.add('ns', omero.rtypes.wrap(namespace))
+
+    qs = conn.getQueryService()
+    q = """
+        SELECT anno
+        FROM Experimenter user
+        JOIN user.annotationLinks links
+        JOIN links.child anno
+        WHERE anno.class = MapAnnotation
+        AND user.id = :mid
+        AND anno.ns LIKE :ns
+        """
+
+    rows = qs.projection(q, params, conn.SERVICE_OPTS)
+
+    re.compile('hms.harvard.edu/omero/forms/data/(Project|Dataset|Image|Screen|Plate[0-9]+)/([A-z0-9]+)')
+
+    obj_types_and_ids = [
+        row[0].val.ns.val
+        for row
+        in rows
+    ]
+
+    print obj_types_and_ids
+    #
+    # return rows[0][0].val
 
 
 def add_form_data(conn, master_user_id, form_id, obj_type, obj_id, data,

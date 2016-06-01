@@ -15,7 +15,7 @@ form1 = """
     "type": "object",
     "required": ["project", "someNumber"],
     "properties": {
-      "project": {"type": "string", "title": "Project"},
+      "project": {"type": "string", "title": "Project Name"},
       "something": {"type": "boolean", "title": "Something?", "default": false},
       "someNumber": {"type": "number", "title": "Some number"}
     }
@@ -65,9 +65,11 @@ group_ids = [203L]
 #                     form1_data, 'rou', datetime.now())
 
 # Get data for a form
-for form_data in utils.get_form_data_history(conn, master_user_id, form_id,
-                                             'Dataset', 251L):
-    print(form_data)
+# print 'Changed At\t\t', '\tChanged By', '\tForm Data'
+# for form_data in utils.get_form_data_history(conn, master_user_id, form_id,
+#                                              'Dataset', 251L):
+#     # print(form_data)
+#     print form_data['changed_at'], '\t', form_data['changed_by'], '\t\t',  form_data['form_data']
 
 # Get latest data for a form
 # pprint(utils.get_form_data(conn, master_user_id, form_id, 'Dataset', 251L))
@@ -78,3 +80,39 @@ for form_data in utils.get_form_data_history(conn, master_user_id, form_id,
 # utils.add_form_data_to_obj(conn, form_id, 'Dataset', 251L, form1_data)
 
 # utils.delete_form_kvdata(conn, form_id, 'Dataset', 251L)
+
+# utils._list_form_data_orphans(conn, master_user_id)
+
+# import omero
+# qs = conn.getQueryService()
+#
+# conn.SERVICE_OPTS.setOmeroGroup(203L)
+#
+# params = omero.sys.ParametersI()
+# params.add('aid', omero.rtypes.wrap(long(422)))
+#
+# # Get all the annotations attached to the form master user
+# q = """
+#     SELECT anno
+#     FROM MapAnnotation anno
+#
+#     """
+#     # WHERE anno.id = :aid
+# rows = qs.projection(q, params, conn.SERVICE_OPTS)
+#
+# for row in rows:
+#     # anno = row[0].val
+#
+#     print row
+#
+#     # handle = conn.deleteObjects('MapAnnotation', [anno.id.val])
+#     # cb = omero.callbacks.CmdCallbackI(conn.c, handle)
+#     #
+#     # while not cb.block(500):
+#     #     pass
+#     # err = isinstance(cb.getResponse(), omero.cmd.ERR)
+#     # if err:
+#     #     # TODO Throw exception
+#     #     pass
+#     #     # print cb.getResponse()
+#     # cb.close(True)
