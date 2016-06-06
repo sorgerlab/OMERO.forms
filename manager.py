@@ -41,7 +41,16 @@ ui1 = """
 {
   "someNumber": {
     "ui:widget": "updown"
+  },
+  "alternative": {
+    "alt-datetime": {
+      "ui:widget": "alt-datetime"
+    },
+    "alt-date": {
+      "ui:widget": "alt-date"
+    }
   }
+
 }
 """
 
