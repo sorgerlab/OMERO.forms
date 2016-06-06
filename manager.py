@@ -17,7 +17,22 @@ form1 = """
     "properties": {
       "project": {"type": "string", "title": "Project Name"},
       "something": {"type": "boolean", "title": "Something?", "default": false},
-      "someNumber": {"type": "number", "title": "Some number"}
+      "someNumber": {"type": "number", "title": "Some number"},
+      "alternative": {
+          "title": "Alternative",
+          "description": "These work on every platform.",
+          "type": "object",
+          "properties": {
+            "alt-datetime": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "alt-date": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        }
     }
 }
 """
@@ -96,6 +111,7 @@ group_ids = [203L]
 # Get a form
 # pprint(utils.get_form(conn, master_user_id, form_id))
 
+# Delete a form
 # utils.delete_form(conn, master_user_id, form_id)
 
 # Add data for a form
@@ -104,10 +120,10 @@ group_ids = [203L]
 
 # Get data for a form
 # print 'Changed At\t\t', '\tChanged By', '\tForm Data'
-# for form_data in utils.get_form_data_history(conn, master_user_id, form_id,
-#                                              'Dataset', 251L):
-#     # print(form_data)
-#     print form_data['changed_at'], '\t', form_data['changed_by'], '\t\t',  form_data['form_data']
+for form_data in utils.get_form_data_history(conn, master_user_id, form_id,
+                                             'Dataset', 251L):
+    # print(form_data)
+    print form_data['changed_at'], '\t', form_data['changed_by'], '\t\t',  form_data['form_data']
 
 # Get latest data for a form
 # pprint(utils.get_form_data(conn, master_user_id, form_id, 'Dataset', 251L))

@@ -531,6 +531,17 @@ def _get_form_kvdata(conn, form_id, obj_type, obj_id):
     return rows[0][0].val
 
 
+def _navigate_form_data_tree(key, data):
+    print type(data)
+    if isinstance(data, dict):
+        # TODO For now we ignore the sub-keys, but maybe we shouldn't?
+        for k, v in data.iteritems():
+            for y in _navigate_form_data_tree(k, v):
+                yield y
+    else:
+        yield [str(key), str(data)]
+
+
 def add_form_data_to_obj(conn, form_id, obj_type, obj_id, data):
     """
     Get the key-values from the data and attach this to the object
@@ -540,7 +551,7 @@ def add_form_data_to_obj(conn, form_id, obj_type, obj_id, data):
     namespace = 'hms.harvard.edu/omero/forms/kvdata/%s' % form_id
 
     # Extract key values from form data
-    kvs = [[str(k), str(v)] for k, v in json.loads(data).iteritems()]
+    kvs = _navigate_form_data_tree(None, json.loads(data))
 
     # If the appropriate annotation already exists, update it
     anno = _get_form_kvdata(conn, form_id, obj_type, obj_id)

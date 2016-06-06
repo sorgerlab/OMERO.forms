@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-
+import Select from 'react-select';
 import Form from "react-jsonschema-form";
+import 'react-select/dist/react-select.css';
 import './forms.css';
 
 function compareFormData(d1, d2) {
@@ -13,7 +14,11 @@ function compareFormData(d1, d2) {
   // Previous data, compare values
   for (var key in d1) {
       if (d1.hasOwnProperty(key)) {
-        if (d1[key] !== d2[key]) {
+        if (d1[key] === Object(d1[key])) {
+          if (!compareFormData(d1[key], d2[key])) {
+            return false;
+          }
+        } else if (d1[key] !== d2[key]) {
           return false;
         }
       }
@@ -79,12 +84,9 @@ export default class Forms extends React.Component {
       });
 
       let activeFormId = undefined;
-      if (jsonData.forms.length == 1) {
-        activeFormId = jsonData.forms[0].formId;
-      // TODO Remove, temporary test
-      } else {
-        activeFormId = jsonData.forms[1].formId;
-      }
+      // if (jsonData.forms.length == 1) {
+      //   activeFormId = jsonData.forms[0].formId;
+      // }
 
       this.setState({
         forms: forms,
@@ -137,12 +139,10 @@ export default class Forms extends React.Component {
     });
   }
 
-  switchForm(key) {
-
+  switchForm(options) {
     this.setState({
-      activeFormId: key
+      activeFormId: options !== null ? options.value : undefined
     });
-
   }
 
   // formData={ this.state.formData }
@@ -152,13 +152,14 @@ export default class Forms extends React.Component {
     // display that form directly.
     // Also, if there is only a single form for a group, display it directly
 
-    const formChoices = [];
-    for (var key in this.state.forms) {
-        if (this.state.forms.hasOwnProperty(key)) {
-          formChoices.push(
-            <li className="omero_forms_list" key={ key } onClick={ this.switchForm.bind(this, key) }>{ key }</li>
-          );
-        }
+    let options = [];
+    for (let key in this.state.forms) {
+      if (this.state.forms.hasOwnProperty(key)) {
+        options.push({
+          value: key,
+          label: this.state.forms[key].jsonSchema.title
+        });
+      }
     }
 
     let form;
@@ -175,14 +176,19 @@ export default class Forms extends React.Component {
       )
     }
 
-    // Show list of available forms
-    // <p>
-    //   <ul>{ formChoices }</ul>
-    // </p>
-
     return (
       (
         <div>
+
+          <Select
+              name="formselect"
+              onChange={ this.switchForm }
+              options={ options }
+              value={ this.state.activeFormId }
+              searchable={false}
+              className={'form-switcher'}
+          />
+
           { form }
         </div>
 
