@@ -67,8 +67,8 @@ def update(request, conn=None, **kwargs):
 
     form_id = update_data['formId']
     form_data = update_data['formData']
-    obj_type = 'Dataset'
-    obj_id = update_data['datasetId']
+    obj_type = update_data['objType']
+    obj_id = update_data['objId']
     changed_at = datetime.now()
     changed_by = conn.user.getName()
 
@@ -114,12 +114,23 @@ def dataset_keys(request, conn=None, **kwargs):
     if not request.GET:
         return HttpResponseNotAllowed('Methods allowed: GET')
 
-    dataset_id = request.GET.get("datasetId")
+    obj_id = request.GET.get("objId")
 
-    if not dataset_id:
-        return HttpResponseBadRequest('Dataset ID required')
+    if not obj_id:
+        return HttpResponseBadRequest('Object ID required')
 
-    dataset_id = long(dataset_id)
+    obj_id = long(obj_id)
+
+    obj_type = request.GET.get("objType")
+
+    if not obj_type:
+        return HttpResponseBadRequest('Object type required')
+
+    obj_types = ['Dataset', 'Project', 'Plate', 'Screen']
+    if obj_type not in obj_types:
+        return HttpResponseBadRequest(
+            'Object type in ' + ','.join(obj_types) + ' required'
+        )
 
     group_id = request.session.get('active_group')
     if group_id is None:
@@ -145,17 +156,18 @@ def dataset_keys(request, conn=None, **kwargs):
             'formId': form['form_id'],
             'jsonSchema': form['json_schema'],
             'uiSchema': form['ui_schema'],
-            'groupIds': form['group_ids']
+            'groupIds': form['group_ids'],
+            'objTypes': form['obj_types']
         }
         for form
-        in utils.list_forms(su_conn, get_priv_uid(conn), group_id)
+        in utils.list_forms(su_conn, get_priv_uid(conn), group_id, obj_type)
     ]
 
     # # TODO Handle this in a single query?
     for form in forms:
         form_data = utils.get_form_data(
             su_conn, get_priv_uid(conn), form['formId'],
-            'Dataset', dataset_id
+            obj_type, obj_id
         )
         if form_data is not None:
             form['formData'] = form_data['form_data']

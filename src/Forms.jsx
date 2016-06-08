@@ -4,6 +4,7 @@ import Select from 'react-select';
 import Form from "react-jsonschema-form";
 import 'react-select/dist/react-select.css';
 import './forms.css';
+import './bootstrap.css';
 
 function compareFormData(d1, d2) {
   // No previous data
@@ -42,25 +43,26 @@ export default class Forms extends React.Component {
   }
 
   componentDidMount() {
-    this.loadFromServer(this.props.datasetId);
+    this.loadFromServer(this.props.objId, this.props.objType);
   }
 
   componentWillReceiveProps(nextProps) {
-    // If the dataset selected has changed, reload
-    if (nextProps.datasetId !== this.props.datasetId) {
-      this.loadFromServer(nextProps.datasetId);
+    // If the object selected has changed, reload
+    if (nextProps.objId !== this.props.objId ||
+        nextProps.objType !== this.props.objType) {
+      this.loadFromServer(nextProps.objId, nextProps.objType);
       // Bail out as a reload was required and done
       return;
     }
 
   }
 
-  loadFromServer(datasetId) {
+  loadFromServer(objId, objType) {
 
     let loadRequest = $.ajax({
       url: this.props.urlDatasetKeys,
       type: "GET",
-      data: { datasetId: datasetId },
+      data: { objId: objId, objType: objType },
       dataType: 'json',
       cache: false
     });
@@ -84,9 +86,6 @@ export default class Forms extends React.Component {
       });
 
       let activeFormId = undefined;
-      // if (jsonData.forms.length == 1) {
-      //   activeFormId = jsonData.forms[0].formId;
-      // }
 
       this.setState({
         forms: forms,
@@ -109,7 +108,8 @@ export default class Forms extends React.Component {
     let updateForm = {
       'formData': JSON.stringify(formDataSubmission.formData),
       'formId': this.state.activeFormId,
-      'datasetId': this.props.datasetId
+      'objId': this.props.objId,
+      'objType': this.props.objType
     };
 
     // Take the form data, submit this to django
@@ -118,22 +118,22 @@ export default class Forms extends React.Component {
       type: "POST",
       data: JSON.stringify(updateForm),
       success: function(data) {
+
         const form = this.state.forms[updateForm.formId];
         form.formData = formDataSubmission.formData
+
         this.setState({
           forms: this.state.forms
-        })
+        });
+
+        // Refresh the right panel
         $("body").trigger("selection_change.ome");
+
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
 
-        // TODO Pop up a warning dialog
-
-        // Completely reload as the state could have been partially updated
-        // or failed for complex reasons due to updates outside of the scope
-        // of autotag
-        // this.refreshForm();
+        // TODO What do do here?
 
       }.bind(this)
     });
@@ -152,12 +152,14 @@ export default class Forms extends React.Component {
     // display that form directly.
     // Also, if there is only a single form for a group, display it directly
 
+    // TODO If there is no form title, use the form_id. Perhaps display the
+    // form id anyway
     let options = [];
     for (let key in this.state.forms) {
       if (this.state.forms.hasOwnProperty(key)) {
         options.push({
           value: key,
-          label: this.state.forms[key].jsonSchema.title
+          label: '' + (this.state.forms[key].jsonSchema.title || '') + ' (' + key + ')'
         });
       }
     }
@@ -179,19 +181,28 @@ export default class Forms extends React.Component {
     return (
       (
         <div>
-
-          <Select
-              name="formselect"
-              onChange={ this.switchForm }
-              options={ options }
-              value={ this.state.activeFormId }
-              searchable={false}
-              className={'form-switcher'}
-          />
-
-          { form }
+          <div className="row">
+            <div className="col-sm-10 col-sm-offset-1">
+              <Select
+                  name="formselect"
+                  onChange={ this.switchForm }
+                  options={ options }
+                  value={ this.state.activeFormId }
+                  searchable={false}
+                  className={'form-switcher'}
+              />
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-sm-10 col-sm-offset-1">
+              <div className="panel panel-default">
+                <div className="panel-body">
+                  { form && form }
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-
       )
     );
   }

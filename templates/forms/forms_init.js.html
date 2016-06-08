@@ -11,10 +11,9 @@ $(function() {
   var urlUpdate="{% url 'omeroforms_update' %}";
 
   var reactRender = function(datatree, selectedNode) {
-    var datasetId = selectedNode.data.obj.id;
-
-    omeroforms.default(datasetId, urlDatasetKeys, urlUpdate);
-
+    var objId = selectedNode.data.obj.id;
+    var objType = selectedNode.type.charAt(0).toUpperCase() + selectedNode.type.slice(1);
+    omeroforms.default(objId, objType, urlDatasetKeys, urlUpdate);
   };
 
   $("#omero_forms_panel").omeroweb_center_plugin({
@@ -40,8 +39,19 @@ $(function() {
       // TODO Handle multi-selection
       var selected = tree_selected[0];
 
+      // If the selected object is an image, return the parent dataset
+      // unless it is an orphan
+      if (selected.type === 'image') {
+        // Set selected to be the parent so that lastSelected can be compared
+        // to the container
+        selected = datatree.get_node(datatree.get_parent(selected));
+        if (selected.type === 'dataset') {
+          reactRender(datatree, selected);
+        }
+      }
+
       // If the selected object is a Dataset
-      if (selected.type === 'dataset'){
+      else if (selected.type === 'dataset'){
         // Make sure that the dataset is loaded
         if (!datatree.is_loaded(selected)) {
           datatree.load_node(selected, function(node, status){
@@ -51,8 +61,20 @@ $(function() {
           reactRender(datatree, datatree.get_node(selected));
         }
       }
+
+      // If the selected object is a Dataset
+      else if (selected.type === 'project'){
+        // Make sure that the project is loaded
+        if (!datatree.is_loaded(selected)) {
+          datatree.load_node(selected, function(node, status){
+            reactRender(datatree, datatree.get_node(node));
+          });
+        } else {
+          reactRender(datatree, datatree.get_node(selected));
+        }
+      }
     },
-    supported_obj_types: ['dataset']
+    supported_obj_types: ['image', 'dataset', 'project']
   });
 });
 

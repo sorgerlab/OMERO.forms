@@ -5,7 +5,8 @@ import json
 
 import utils
 
-conn_manager = OMEROConnectionManager()
+# conn_manager = OMEROConnectionManager(config_file="omero.cfg")
+conn_manager = OMEROConnectionManager(config_file="omero_su.cfg")
 conn = conn_manager.connect()
 
 # Add a key-value to the group
@@ -17,22 +18,7 @@ form1 = """
     "properties": {
       "project": {"type": "string", "title": "Project Name"},
       "something": {"type": "boolean", "title": "Something?", "default": false},
-      "someNumber": {"type": "number", "title": "Some number"},
-      "alternative": {
-          "title": "Alternative",
-          "description": "These work on every platform.",
-          "type": "object",
-          "properties": {
-            "alt-datetime": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "alt-date": {
-              "type": "string",
-              "format": "date"
-            }
-          }
-        }
+      "someNumber": {"type": "number", "title": "Some number"}
     }
 }
 """
@@ -41,14 +27,6 @@ ui1 = """
 {
   "someNumber": {
     "ui:widget": "updown"
-  },
-  "alternative": {
-    "alt-datetime": {
-      "ui:widget": "alt-datetime"
-    },
-    "alt-date": {
-      "ui:widget": "alt-date"
-    }
   }
 
 }
@@ -56,40 +34,23 @@ ui1 = """
 
 form2 = """
 {
-  "title": "Date and time widgets",
-  "type": "object",
-  "properties": {
-    "native": {
-      "title": "Native",
-      "description": "May not work on some browsers, notably Firefox Desktop and IE.",
-      "type": "object",
-      "properties": {
-        "datetime": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "date": {
-          "type": "string",
-          "format": "date"
-        }
-      }
-    },
-    "alternative": {
-      "title": "Alternative",
-      "description": "These work on every platform.",
-      "type": "object",
-      "properties": {
-        "alt-datetime": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "alt-date": {
-          "type": "string",
-          "format": "date"
-        }
-      }
+    "title": "Form Two",
+    "type": "object",
+    "required": ["project", "someNumber"],
+    "properties": {
+      "project": {"type": "string", "title": "Project Name"},
+      "something": {"type": "boolean", "title": "Something?", "default": false},
+      "someNumber": {"type": "number", "title": "Some number"}
     }
+}
+"""
+
+ui2 = """
+{
+  "someNumber": {
+    "ui:widget": "updown"
   }
+
 }
 """
 
@@ -105,16 +66,29 @@ form_schema = form1
 ui_schema = ui1
 group_ids = [203L]
 
-# Add a form
-# utils.add_form(conn, master_user_id, form_id, form_schema, ui_schema,
-#                group_ids)
+# Add a form for datasets
+# utils.add_form(conn, master_user_id, 'form1', form1, ui1,
+#                [203L], ['Dataset'])
+
+# Add a form for projects
+# utils.add_form(conn, master_user_id, 'form2', form2, ui2,
+#                [203L], ['Project'])
+
 
 # List all the forms
-# for form in utils.list_forms(conn, master_user_id):
-#     pprint(form)
+for form in utils.list_forms(conn, master_user_id):
+    pprint(form)
 
 # List all the forms in a group
 # for form in utils.list_forms(conn, master_user_id, 203L):
+#     pprint(form)
+
+# List all the forms in a group for datasets
+# for form in utils.list_forms(conn, master_user_id, 203L, 'Dataset'):
+#     pprint(form)
+
+# List all the forms in a group for projects
+# for form in utils.list_forms(conn, master_user_id, 203L, 'Project'):
 #     pprint(form)
 
 # Get a form
@@ -129,10 +103,10 @@ group_ids = [203L]
 
 # Get data for a form
 # print 'Changed At\t\t', '\tChanged By', '\tForm Data'
-for form_data in utils.get_form_data_history(conn, master_user_id, form_id,
-                                             'Dataset', 251L):
-    # print(form_data)
-    print form_data['changed_at'], '\t', form_data['changed_by'], '\t\t',  form_data['form_data']
+# for form_data in utils.get_form_data_history(conn, master_user_id, form_id,
+#                                              'Dataset', 251L):
+#     # print(form_data)
+#     print form_data['changed_at'], '\t', form_data['changed_by'], '\t\t',  form_data['form_data']
 
 # Get latest data for a form
 # pprint(utils.get_form_data(conn, master_user_id, form_id, 'Dataset', 251L))

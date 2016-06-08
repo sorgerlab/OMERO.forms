@@ -22,7 +22,7 @@ class DatetimeEncoder(json.JSONEncoder):
 
 
 def add_form(conn, master_user_id, form_id, json_schema, ui_schema,
-             group_ids=[]):
+             group_ids=[], obj_types=[]):
     """
     Add a form to the form master user and mark it for use in the designated
     groups.
@@ -66,6 +66,11 @@ def add_form(conn, master_user_id, form_id, json_schema, ui_schema,
     # The groups that are subscribed to this form
     keyValueData.extend([['group', str(group_id)] for group_id in group_ids])
 
+    # The object types that this form is intended for
+    keyValueData.extend(
+        [['obj_type', str(obj_type)] for obj_type in obj_types]
+    )
+
     # Create and save the map annotation with the custom namespace and
     # specified key value data
     mapAnn = omero.gateway.MapAnnotationWrapper(conn)
@@ -82,10 +87,10 @@ def add_form(conn, master_user_id, form_id, json_schema, ui_schema,
     update.saveObject(link, conn.SERVICE_OPTS)
 
 
-def list_forms(conn, master_user_id, group_id=None):
+def list_forms(conn, master_user_id, group_id=None, obj_type=None):
     """
     List all the forms, optionally limited to those available for a single
-    group
+    group, and optionall limited to those available for a single object type
     """
 
     qs = conn.getQueryService()
@@ -130,6 +135,7 @@ def list_forms(conn, master_user_id, group_id=None):
         _json_schema = None
         _ui_schema = None
         _group_ids = []
+        _obj_types = []
 
         anno = row[0].val
         kvs = anno.getMapValue()
@@ -142,18 +148,25 @@ def list_forms(conn, master_user_id, group_id=None):
                 _ui_schema = kv.value
             elif kv.name == 'group':
                 _group_ids.append(long(kv.value))
+            elif kv.name == 'obj_type':
+                _obj_types.append(kv.value)
 
         # TODO Throw exception
         assert _form_id is not None
         assert _json_schema is not None
         assert _ui_schema is not None
 
-        yield {
-            'form_id': _form_id,
-            'json_schema': _json_schema,
-            'ui_schema': _ui_schema,
-            'group_ids': _group_ids
-        }
+        # TODO Ideally this would be a part of the query, but it is easier to
+        # simply filter here for now
+        if obj_type is None or obj_type in _obj_types:
+
+            yield {
+                'form_id': _form_id,
+                'json_schema': _json_schema,
+                'ui_schema': _ui_schema,
+                'group_ids': _group_ids,
+                'obj_types': _obj_types
+            }
 
 
 def _get_form(conn, master_user_id, form_id):
@@ -206,6 +219,7 @@ def get_form(conn, master_user_id, form_id):
     _json_schema = None
     _ui_schem = None
     _group_ids = []
+    _obj_types = []
 
 
     kvs = anno.getMapValue()
@@ -218,6 +232,8 @@ def get_form(conn, master_user_id, form_id):
             _ui_schema = kv.value
         elif kv.name == 'group':
             _group_ids.append(long(kv.value))
+        elif kv.name == 'obj_type':
+            _obj_types.append(kv.value)
 
     # TODO Throw exception
     assert _form_id is not None
@@ -229,7 +245,8 @@ def get_form(conn, master_user_id, form_id):
         'form_id': _form_id,
         'json_schema': _json_schema,
         'ui_schema': _ui_schem,
-        'group_ids': _group_ids
+        'group_ids': _group_ids,
+        'obj_types': _obj_types
     }
 
 
@@ -534,9 +551,15 @@ def _get_form_kvdata(conn, form_id, obj_type, obj_id):
 def _navigate_form_data_tree(key, data):
     print type(data)
     if isinstance(data, dict):
-        # TODO For now we ignore the sub-keys, but maybe we shouldn't?
         for k, v in data.iteritems():
-            for y in _navigate_form_data_tree(k, v):
+            compound_key = key or ''
+            if key:
+                compound_key = key + '_'
+            for y in _navigate_form_data_tree(compound_key + k, v):
+                yield y
+    elif isinstance(data, list):
+        for item in data:
+            for y in _navigate_form_data_tree(key, item):
                 yield y
     else:
         yield [str(key), str(data)]
@@ -576,9 +599,6 @@ def add_form_data_to_obj(conn, form_id, obj_type, obj_id, data):
         elif obj_type == 'Dataset':
             link = omero.model.DatasetAnnotationLinkI()
             link.parent = omero.model.DatasetI(obj_id, False)
-        elif obj_type == 'Image':
-            link = omero.model.ImageAnnotationLinkI()
-            link.parent = omero.model.ImageI(obj_id, False)
         elif obj_type == 'Screen':
             link = omero.model.ScreenAnnotationLinkI()
             link.parent = omero.model.ScreenI(obj_id, False)

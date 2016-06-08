@@ -6,3 +6,4 @@ local_settings.py
 
 node_modules
 omero.cfg
+omero_su.cfg
