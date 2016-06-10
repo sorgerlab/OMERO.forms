@@ -1,0 +1,40 @@
+{
+  "title": "Basic Experimental Metadata",
+  "type": "object",
+  "required": [
+    "description",
+    "cellType",
+    "formType",
+    "controlType",
+    "labellingProtocol"
+  ],
+  "properties": {
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "cellType": {
+      "type": "string",
+      "title": "Cell type"
+    },
+    "formType": {
+      "type": "string",
+      "enum": [
+        "Experiment",
+        "Assay Development",
+        "Other"
+      ],
+      "title": "Type",
+      "uniqueItems": true
+    },
+    "controlType": {
+      "type": "string",
+      "enum": ["Positive", "Negative"],
+      "title": "Control Type"
+    },
+    "labellingProtocol": {
+      "type": "string",
+      "title": "Labelling Protocol"
+    }
+  }
+}

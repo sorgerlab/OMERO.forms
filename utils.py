@@ -30,6 +30,8 @@ def add_form(conn, master_user_id, form_id, json_schema, ui_schema,
     form_id must be globally unique
     """
 
+    # TODO Validate schemas??
+
     qs = conn.getQueryService()
 
     namespace = 'hms.harvard.edu/omero/forms/schema/%s' % (form_id)
@@ -217,7 +219,7 @@ def get_form(conn, master_user_id, form_id):
 
     _form_id = None
     _json_schema = None
-    _ui_schem = None
+    _ui_schema = None
     _group_ids = []
     _obj_types = []
 
@@ -238,13 +240,13 @@ def get_form(conn, master_user_id, form_id):
     # TODO Throw exception
     assert _form_id is not None
     assert _json_schema is not None
-    assert _ui_schem is not None
+    assert _ui_schema is not None
     assert _form_id == form_id
 
     return {
         'form_id': _form_id,
         'json_schema': _json_schema,
-        'ui_schema': _ui_schem,
+        'ui_schema': _ui_schema,
         'group_ids': _group_ids,
         'obj_types': _obj_types
     }
@@ -344,12 +346,10 @@ def _get_form_data(conn, master_user_id, form_id, obj_type, obj_id):
     return rows[0][0].val
 
 
-def _list_form_data_orphans(conn, master_user_id):
+def list_form_data_orphans(conn, master_user_id):
     """
     Lists the form data associated with a particular form for a particular
     object where the objects no longer exist
-
-    Returns a list of MapAnnotationI objects
     """
 
     namespace = 'hms.harvard.edu/omero/forms/data/%'
@@ -358,6 +358,7 @@ def _list_form_data_orphans(conn, master_user_id):
     params.add('mid', omero.rtypes.wrap(long(master_user_id)))
     params.add('ns', omero.rtypes.wrap(namespace))
 
+    # Get all the data annotations
     qs = conn.getQueryService()
     q = """
         SELECT anno
@@ -371,17 +372,52 @@ def _list_form_data_orphans(conn, master_user_id):
 
     rows = qs.projection(q, params, conn.SERVICE_OPTS)
 
-    re.compile('hms.harvard.edu/omero/forms/data/(Project|Dataset|Image|Screen|Plate[0-9]+)/([A-z0-9]+)')
+    ore = re.compile(
+        'hms.harvard.edu/omero/forms/data/'
+        '(Project|Dataset|Image|Screen|Plate)([0-9]+)/([A-z0-9]+)'
+    )
 
-    obj_types_and_ids = [
-        row[0].val.ns.val
-        for row
-        in rows
-    ]
+    obj_types_ids = {}
+    obj_form_ids = {}
+    for row in rows:
+        matches = ore.search(row[0].val.ns.val)
 
-    print obj_types_and_ids
-    #
-    # return rows[0][0].val
+        # Collect the object IDs for each object type
+        obj_type = obj_types_ids.setdefault(matches.group(1), [])
+        obj_type.append(long(matches.group(2)))
+        # collected the form for each object
+        obj_form = obj_form_ids.setdefault(
+            (matches.group(1), long(matches.group(2))), []
+        )
+        obj_form.append(matches.group(3))
+
+    for obj_type, obj_ids in obj_types_ids.iteritems():
+
+        params = omero.sys.ParametersI()
+        params.add('oids', omero.rtypes.wrap(obj_ids))
+
+        q = """
+            SELECT obj.id
+            FROM %s obj
+            WHERE obj.id IN (:oids)
+            """ % obj_type
+
+        conn.SERVICE_OPTS.setOmeroGroup(-1)
+        rows = qs.projection(q, params, conn.SERVICE_OPTS)
+
+        for row in rows:
+            # Remove the objects which do exist
+            obj_form_ids.pop((obj_type, row[0].val))
+
+    for obj, form_ids in obj_form_ids.iteritems():
+        for form_id in form_ids:
+            yield {
+                'form_id': form_id,
+                'obj_type': obj[0],
+                'obj_id': obj[1]
+            }
+    return
+
 
 
 def add_form_data(conn, master_user_id, form_id, obj_type, obj_id, data,

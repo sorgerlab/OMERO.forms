@@ -1,0 +1,14 @@
+{
+  "description": {
+    "ui:widget": "textarea"
+  },
+  "formType": {
+    "ui:widget": "radio"
+  },
+  "controlType": {
+    "ui:widget": "radio"
+  },
+  "labellingProtocol": {
+    "ui:widget": "textarea"
+  }
+}

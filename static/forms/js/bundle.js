@@ -20585,7 +20585,7 @@ var omeroforms =
 
 	      return _react2.default.createElement(
 	        'div',
-	        null,
+	        { className: 'container-fluid' },
 	        _react2.default.createElement(
 	          'div',
 	          { className: 'row' },
@@ -23874,7 +23874,16 @@ var omeroforms =
 	      var errorSchema = _ref.errorSchema;
 
 	      var idSchema = (0, _utils.toIdSchema)(schema, uiSchema["ui:rootFieldId"], definitions);
-	      return { status: "initial", formData: formData, edit: edit, errors: errors, errorSchema: errorSchema, idSchema: idSchema };
+	      return {
+	        status: "initial",
+	        schema: schema,
+	        uiSchema: uiSchema,
+	        idSchema: idSchema,
+	        formData: formData,
+	        edit: edit,
+	        errors: errors,
+	        errorSchema: errorSchema
+	      };
 	    }
 	  }, {
 	    key: "shouldComponentUpdate",
@@ -23925,8 +23934,6 @@ var omeroforms =
 	    value: function render() {
 	      var _props = this.props;
 	      var children = _props.children;
-	      var schema = _props.schema;
-	      var uiSchema = _props.uiSchema;
 	      var safeRenderCompletion = _props.safeRenderCompletion;
 	      var id = _props.id;
 	      var className = _props.className;
@@ -23938,6 +23945,8 @@ var omeroforms =
 	      var enctype = _props.enctype;
 	      var acceptcharset = _props.acceptcharset;
 	      var _state2 = this.state;
+	      var schema = _state2.schema;
+	      var uiSchema = _state2.uiSchema;
 	      var formData = _state2.formData;
 	      var errorSchema = _state2.errorSchema;
 	      var idSchema = _state2.idSchema;
@@ -28631,7 +28640,7 @@ var omeroforms =
 
 	      return _react2.default.createElement(
 	        "div",
-	        { key: index },
+	        { key: index, className: "array-item" },
 	        _react2.default.createElement(
 	          "div",
 	          { className: removable ? "col-xs-10" : "col-xs-12" },
@@ -29042,6 +29051,10 @@ var omeroforms =
 
 	var _react2 = _interopRequireDefault(_react);
 
+	var _deeper = __webpack_require__(271);
+
+	var _deeper2 = _interopRequireDefault(_deeper);
+
 	var _utils = __webpack_require__(268);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -29053,6 +29066,20 @@ var omeroforms =
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	function objectKeysHaveChanged(formData, state) {
+	  // for performance, first check for lengths
+	  var newKeys = Object.keys(formData);
+	  var oldKeys = Object.keys(state);
+	  if (newKeys.length < oldKeys.length) {
+	    return true;
+	  }
+	  // deep check on sorted keys
+	  if (!(0, _deeper2.default)(newKeys.sort(), oldKeys.sort())) {
+	    return true;
+	  }
+	  return false;
+	}
 
 	var ObjectField = function (_Component) {
 	  _inherits(ObjectField, _Component);
@@ -29075,7 +29102,17 @@ var omeroforms =
 	  _createClass(ObjectField, [{
 	    key: "componentWillReceiveProps",
 	    value: function componentWillReceiveProps(nextProps) {
-	      this.setState(this.getStateFromProps(nextProps));
+	      var state = this.getStateFromProps(nextProps);
+	      var formData = nextProps.formData;
+
+	      if (formData && objectKeysHaveChanged(formData, this.state)) {
+	        // We *need* to replace state entirely here has we have received formData
+	        // holding different keys (so with some removed).
+	        this.state = state;
+	        this.forceUpdate();
+	      } else {
+	        this.setState(state);
+	      }
 	    }
 	  }, {
 	    key: "getStateFromProps",
@@ -32714,7 +32751,7 @@ var omeroforms =
 
 
 	// module
-	exports.push([module.id, "", ""]);
+	exports.push([module.id, "#omero_forms_panel .Select{margin-top:15px;margin-bottom:15px}#omero_forms_panel{font-family:Helvetica Neue,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.42857143}", ""]);
 
 	// exports
 

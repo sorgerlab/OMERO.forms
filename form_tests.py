@@ -804,6 +804,7 @@ conn = conn_manager.connect()
 
 master_user_id = 252L
 group_ids = [203L]
+obj_types = ['Dataset']
 
 for form in utils.list_forms(su_conn, master_user_id):
     utils.delete_form(su_conn, master_user_id, form['form_id'])
@@ -811,8 +812,8 @@ for form in utils.list_forms(su_conn, master_user_id):
                            251L)
     utils.delete_form_kvdata(conn, form['form_id'], 'Dataset', 251L)
 
-# for form_schema in form_schemas:
-#     form_id, form_json, form_ui = form_schema
-#     # print form_id, form_json, form_ui
-#     utils.add_form(su_conn, master_user_id, form_id, form_json, form_ui,
-#                    group_ids)
+for form_schema in form_schemas:
+    form_id, form_json, form_ui = form_schema
+    # print form_id, form_json, form_ui
+    utils.add_form(su_conn, master_user_id, form_id, form_json, form_ui,
+                   group_ids, obj_types)

@@ -20,7 +20,7 @@
     "file-loader": "^0.8.5",
     "react": "^15.1.0",
     "react-dom": "^15.1.0",
-    "react-jsonschema-form": "^0.33.1",
+    "react-jsonschema-form": "^0.33.2",
     "react-select": "^1.0.0-beta13",
     "react-tooltip": "^2.0.3",
     "style-loader": "^0.13.0",
