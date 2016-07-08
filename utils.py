@@ -21,6 +21,26 @@ class DatetimeEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
+def get_formmaster_id(conn, formmaster_username):
+
+    qs = conn.getQueryService()
+    params = omero.sys.ParametersI()
+    params.add('fm', omero.rtypes.wrap(formmaster_username))
+
+    q = """
+        SELECT user.id
+        FROM Experimenter user
+        WHERE user.omeName = :fm
+        """
+
+    rows = qs.projection(q, params, conn.SERVICE_OPTS)
+    if len(rows) != 1:
+        # TODO Raise exception instead
+        print('user \'%s\' does not exists' % formmaster_username)
+
+    return rows[0][0].val
+
+
 def add_form(conn, master_user_id, form_id, json_schema, ui_schema,
              group_ids=[], obj_types=[]):
     """

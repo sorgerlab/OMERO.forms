@@ -117,6 +117,11 @@ def add_form(master_id, form_id, json_schema, ui_schema, group_ids, obj_types):
                    group_ids, obj_types)
 
 
+def delete_form(master_id, form_id):
+    # TODO Try
+    utils.delete_form(conn, master_id, form_id)
+
+
 @subcmd('list')
 def form_list(parser, context, args):
 
@@ -215,209 +220,34 @@ def form_add(parser, context, args):
     add_form(context.master, args.form, schema, ui, args.groups, args.types)
 
 
+@subcmd('delete')
+def form_delete(parser, context, args):
 
-# TODO Delete Form
+    parser.add_argument('form',
+                        help='Form ID to delete')
+
+    args = parser.parse_args(args)
+
+    delete_form(context.master, args.form)
+
+
 # TODO Delete data
 # TODO Delete kv?
+# TODO Update form groups/object types
 
+def formmaster(value):
+    try:
+        return long(value)
+    except ValueError:
+        pass
 
-
-
-
-
-
-
+    # TODO Try-catch
+    return utils.get_formmaster_id(conn, value)
 
 if __name__ == '__main__':
     handler = ArgumentHandler()
 
-    handler.add_argument('--master', '-m', type=long, required=True,
+    handler.add_argument('--master', '-m', type=formmaster, required=True,
                          help='User ID of the forms master')
 
     handler.run()
-
-
-
-
-
-
-
-
-
-
-
-# # Add a key-value to the group
-# form1 = """
-# {
-#     "title": "Form One",
-#     "type": "object",
-#     "required": ["project", "someNumber"],
-#     "properties": {
-#       "project": {"type": "string", "title": "Project Name"},
-#       "something": {"type": "boolean", "title": "Something?", "default": false},
-#       "someNumber": {"type": "number", "title": "Some number"}
-#     }
-# }
-# """
-#
-# ui1 = """
-# {
-#   "someNumber": {
-#     "ui:widget": "updown"
-#   }
-#
-# }
-# """
-#
-# form2 = """
-# {
-#     "title": "Form Two",
-#     "type": "object",
-#     "required": ["project", "someNumber"],
-#     "properties": {
-#       "project": {"type": "string", "title": "Project Name"},
-#       "something": {"type": "boolean", "title": "Something?", "default": false},
-#       "someNumber": {"type": "number", "title": "Some number"}
-#     }
-# }
-# """
-#
-# ui2 = """
-# {
-#   "someNumber": {
-#     "ui:widget": "updown"
-#   }
-#
-# }
-# """
-#
-# form_basic = """
-# {
-#   "title": "Basic Experimental Metadata",
-#   "type": "object",
-#   "required": [
-#     "description",
-#     "cellType",
-#     "formType",
-#     "controlType",
-#     "labellingProtocol"
-#   ],
-#   "properties": {
-#     "description": {
-#       "type": "string",
-#       "title": "Description"
-#     },
-#     "cellType": {
-#       "type": "string",
-#       "title": "Cell type"
-#     },
-#     "formType": {
-#       "type": "string",
-#       "enum": [
-#         "Experiment",
-#         "Assay Development",
-#         "Other"
-#       ],
-#       "title": "Type",
-#       "uniqueItems": true
-#     },
-#     "controlType": {
-#       "type": "string",
-#       "enum": ["Positive", "Negative"],
-#       "title": "Control Type"
-#     },
-#     "labellingProtocol": {
-#       "type": "string",
-#       "title": "Labelling Protocol"
-#     }
-#   }
-# }
-# """
-#
-# ui_basic = """
-# {
-#   "description": {
-#     "ui:widget": "textarea"
-#   },
-#   "formType": {
-#     "ui:widget": "radio"
-#   },
-#   "controlType": {
-#     "ui:widget": "radio"
-#   },
-#   "labellingProtocol": {
-#     "ui:widget": "textarea"
-#   }
-# }
-# """
-#
-# form1_data = json.dumps({
-#     'project': 'My first project',
-#     'something': True,
-#     'someNumber': 12345
-# })
-#
-# master_user_id = 252L
-# form_id = 'form1'
-# form_schema = form1
-# ui_schema = ui1
-# group_ids = [203L]
-
-# Add a form for datasets
-# utils.add_form(su_conn, master_user_id, 'form1', form1, ui1,
-#                [203L], ['Dataset'])
-
-# Add a form for projects
-# utils.add_form(su_conn, master_user_id, 'form2', form2, ui2,
-#                [203L], ['Project'])
-
-# Add a form for datasets and plates
-# utils.add_form(su_conn, master_user_id, 'basic', form_basic, ui_basic,
-#                [203L], ['Dataset', 'Plate'])
-
-# List all the forms
-# for form in utils.list_forms(su_conn, master_user_id):
-#     pprint(form)
-
-# List all the forms in a group
-# for form in utils.list_forms(su_conn, master_user_id, 203L):
-#     pprint(form)
-
-# List all the forms in a group for datasets
-# for form in utils.list_forms(su_conn, master_user_id, 203L, 'Dataset'):
-#     pprint(form)
-
-# List all the forms in a group for projects
-# for form in utils.list_forms(su_conn, master_user_id, 203L, 'Project'):
-#     pprint(form)
-
-# Get a form
-# pprint(utils.get_form(su_conn, master_user_id, form_id))
-
-# Delete a form
-# utils.delete_form(su_conn, master_user_id, form_id)
-# utils.delete_form(su_conn, master_user_id, 'basic')
-
-# Add data for a form
-# utils.add_form_data(su_conn, master_user_id, form_id, 'Dataset', 251L,
-#                     form1_data, 'rou', datetime.now())
-
-# Get data for a form
-# print 'Changed At\t\t', '\tChanged By', '\tForm Data'
-# for form_data in utils.get_form_data_history(su_conn, master_user_id, 'basic',
-#                                              'Dataset', 251L):
-#     # print(form_data)
-#     print form_data['changed_at'], '\t', form_data['changed_by'], '\t\t',  form_data['form_data']
-
-# Get latest data for a form
-# pprint(utils.get_form_data(su_conn, master_user_id, form_id, 'Dataset', 251L))
-
-# Delete data for a form
-# utils.delete_form_data(su_conn, master_user_id, form_id, 'Dataset', 251L)
-
-# utils.add_form_data_to_obj(conn, form_id, 'Dataset', 251L, form1_data)
-
-# utils.delete_form_kvdata(conn, form_id, 'Dataset', 251L)
-
-# for orphan in utils.list_form_data_orphans(conn, 252L):
-#     print orphan
