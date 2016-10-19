@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OMERO.forms Designer</title>
+
+  <link rel="stylesheet" id="theme" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+  <!-- <script src="//cdn.polyfill.io/v2/polyfill.min.js"></script> -->
+</head>
+<body>
+  <div id="omero_forms_panel"></div>
+  <script>
+    var globalURLs = {
+      base: "{% url 'omeroforms_base' %}",
+      listForms: "{% url 'omeroforms_list_forms' %}",
+      addForm: "{% url 'omeroforms_add_form' %}",
+      assignForm: "{% url 'omeroforms_assign_form' %}",
+      managedGroups: "{% url 'omeroforms_managed_groups' %}"
+    };
+  </script>
+  <script src="{% static "forms/js/designer.js" %}"></script>
+</body>
+</html>

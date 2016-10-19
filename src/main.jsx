@@ -1,13 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Forms from './Forms';
+import Viewer from './Viewer';
 
-function omeroforms(objId, objType, urlDatasetKeys, urlUpdate) {
+function omeroforms(objId, objType, urlDatasetKeys, urlUpdate, urls) {
   ReactDOM.render(
-    <Forms urlDatasetKeys={ urlDatasetKeys }
+    <Viewer urlDatasetKeys={ urlDatasetKeys }
            urlUpdate={ urlUpdate }
            objId={ objId }
-           objType={ objType }/>,
+           objType={ objType }
+           urls={ urls }
+    />,
     document.getElementById('omero_forms_panel')
   );
 }

@@ -3,61 +3,45 @@ import ReactDOM from 'react-dom';
 import Select from 'react-select';
 import Form from "react-jsonschema-form";
 
-function compareFormData(d1, d2) {
-  // No previous data
-  if (d2 === undefined) {
-    return false;
-  }
-
-  // Previous data, compare values
-  for (var key in d1) {
-      if (d1.hasOwnProperty(key)) {
-        if (d1[key] === Object(d1[key])) {
-          if (!compareFormData(d1[key], d2[key])) {
-            return false;
-          }
-        } else if (d1[key] !== d2[key]) {
-          return false;
-        }
-      }
-  }
-  return true;
-}
-
-export default class Forms extends React.Component {
+export default class History extends React.Component {
 
   constructor() {
     super();
 
     this.state = {
       forms: {},
-      activeFormId: undefined
+      formId: undefined,
+      formData: [],
+      dataIndex: undefined
     }
 
-    this.submitForm = this.submitForm.bind(this);
     this.loadFromServer = this.loadFromServer.bind(this);
     this.switchForm = this.switchForm.bind(this);
+    this.switchData = this.switchData.bind(this);
   }
 
   componentDidMount() {
-    this.loadFromServer(this.props.objId, this.props.objType);
+    this.loadFromServer();
   }
 
   componentWillReceiveProps(nextProps) {
     // If the object selected has changed, reload
     if (nextProps.objId !== this.props.objId ||
         nextProps.objType !== this.props.objType) {
-      this.loadFromServer(nextProps.objId, nextProps.objType);
+      this.loadFromServer();
+      this.getData();
       // Bail out as a reload was required and done
       return;
     }
 
   }
 
-  loadFromServer(objId, objType) {
+  loadFromServer() {
+
+    const { urls, objType, objId } = this.props;
 
     let loadRequest = $.ajax({
-      url: this.props.urlDatasetKeys,
+      url: urls.urlDatasetKeys,
       type: "GET",
       data: { objId: objId, objType: objType },
       dataType: 'json',
@@ -69,81 +53,63 @@ export default class Forms extends React.Component {
       let forms = {};
       jsonData.forms.forEach(form => {
 
-        let formData;
-        if (form.hasOwnProperty('formData')) {
-          formData = JSON.parse(form.formData);
-        }
-
         forms[form.formId] = {
           formId: form.formId,
           jsonSchema: JSON.parse(form.jsonSchema),
-          uiSchema: JSON.parse(form.uiSchema),
-          formData: formData
+          uiSchema: JSON.parse(form.uiSchema)
         }
       });
 
-      let activeFormId = undefined;
-
       this.setState({
         forms: forms,
-        activeFormId: activeFormId,
+        formId: Object.keys(forms).length === 1 ? forms[Object.keys(forms)[0]].formId : undefined
       });
+
+      if (Object.keys(forms).length === 1) {
+        this.getData();
+      }
 
     });
   }
 
-  submitForm(formDataSubmission) {
+  getData() {
+    const { formId } = this.state;
+    const { urls, objType, objId } = this.props;
 
-    // If there are no changes, bail out as there is nothing to be done
-    if (compareFormData(
-      formDataSubmission.formData,
-      this.state.forms[this.state.activeFormId].formData
-    )) {
-      return;
-    }
+    const request = new Request(
+      `${urls.base}form_data/${formId}/${objType}/${objId}`,
+      {
+        credentials: 'same-origin'
+      }
+    );
 
-    let updateForm = {
-      'formData': JSON.stringify(formDataSubmission.formData),
-      'formId': this.state.activeFormId,
-      'objId': this.props.objId,
-      'objType': this.props.objType
-    };
-
-    // Take the form data, submit this to django
-    $.ajax({
-      url: this.props.urlUpdate,
-      type: "POST",
-      data: JSON.stringify(updateForm),
-      success: function(data) {
-
-        const form = this.state.forms[updateForm.formId];
-        form.formData = formDataSubmission.formData
-
-        this.setState({
-          forms: this.state.forms
-        });
-
-        // Refresh the right panel
-        $("body").trigger("selection_change.ome");
-
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-
-        // TODO What do do here?
-
-      }.bind(this)
-    });
+    fetch(
+      request
+    ).then(
+      response => response.json()
+    ).then(
+      jsonData => this.setState({
+        formData: jsonData.formData.sort((a, b) => a >= b),
+        dataIndex: jsonData.formData.length-1
+      })
+    );
   }
 
   switchForm(options) {
     this.setState({
-      activeFormId: options !== null ? options.value : undefined
+      formId: options !== null ? options.value : undefined
     });
   }
 
-  // formData={ this.state.formData }
+  switchData(options) {
+    this.setState({
+      dataIndex: options.target.value
+    });
+  }
+
   render() {
+
+    const { formId, formData, dataIndex } = this.state;
 
     // If there is a single form which has previously been filled then
     // display that form directly.
@@ -162,18 +128,30 @@ export default class Forms extends React.Component {
     }
 
     let form;
-    if (this.state.activeFormId !== undefined) {
-      const activeForm = this.state.forms[this.state.activeFormId];
+    if (formId !== undefined) {
+      const activeForm = this.state.forms[formId];
 
       form = (
         <Form
           schema={ activeForm.jsonSchema }
           uiSchema={ activeForm.uiSchema }
-          formData={ activeForm.formData }
-          onSubmit={ this.submitForm }
-        />
+          formData={ dataIndex !== undefined ? JSON.parse(formData[dataIndex].form_data) : undefined }
+        >
+          <button type="button" className="btn btn-primary disabled">Submit</button>
+        </Form>
       )
     }
+
+    // <Select
+    //   name="dataselect"
+    //   onChange={ this.switchData }
+    //   options={ formData.map((d, i) => ({
+    //     value: i,
+    //     label: `${d.changed_by}_${d.changed_at}`
+    //   })) }
+    //   value={ dataIndex }
+    //   searchable={ false }
+    // />
 
     return (
       (
@@ -184,10 +162,26 @@ export default class Forms extends React.Component {
                   name="formselect"
                   onChange={ this.switchForm }
                   options={ options }
-                  value={ this.state.activeFormId }
+                  value={ formId }
                   searchable={false}
                   className={'form-switcher'}
               />
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-sm-10 col-sm-offset-1">
+              { formData && dataIndex &&
+                `${formData[dataIndex].changed_by} - ${formData[dataIndex].changed_at}`
+              }
+              {
+                formData && dataIndex &&
+                <input type="range" id="dataselect" min="0" max={ Object.keys(formData).length-1 } className="form-control" onInput={ this.switchData } value={ dataIndex }/>
+              }
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-sm-10 col-sm-offset-1">
+
             </div>
           </div>
           <div className="row">

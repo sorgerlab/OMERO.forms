@@ -7,6 +7,7 @@ module.exports = {
   entry: {
     'bundle.min': ['./src/main.jsx'],
     'bundle': ['./src/main.jsx'],
+    'designer': ['./src/designer.jsx'],
   },
   output: {
     path: './static/forms/js',
@@ -27,7 +28,16 @@ module.exports = {
         exclude: /node_modules/,
         query: {
           plugins: ['transform-runtime'],
-          presets: ['react', 'es2015']
+          presets: ['react', 'es2015', 'stage-2']
+        }
+      },
+      {
+        test: /\.js$/,
+        loader: 'babel-loader',
+        exclude: /node_modules/,
+        query: {
+          plugins: ['transform-runtime'],
+          presets: ['es2015', 'stage-2']
         }
       },
       {

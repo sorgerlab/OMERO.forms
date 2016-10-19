@@ -1,8 +1,10 @@
 from functools import wraps
 import omero
+from omero.rtypes import rlong, unwrap, wrap
 import json
 from datetime import datetime
 import re
+from copy import deepcopy
 
 # def as_form_master(f):
 #     @wraps(f)
@@ -42,7 +44,7 @@ def get_formmaster_id(conn, formmaster_username):
 
 
 def add_form(conn, master_user_id, form_id, json_schema, ui_schema,
-             group_ids=[], obj_types=[]):
+             group_ids=[], obj_types=[], replace=False):
     """
     Add a form to the form master user and mark it for use in the designated
     groups.
@@ -51,7 +53,6 @@ def add_form(conn, master_user_id, form_id, json_schema, ui_schema,
     """
 
     # TODO Validate schemas??
-
     qs = conn.getQueryService()
 
     namespace = 'hms.harvard.edu/omero/forms/schema/%s' % (form_id)
@@ -72,9 +73,13 @@ def add_form(conn, master_user_id, form_id, json_schema, ui_schema,
 
     rows = qs.projection(q, params, conn.SERVICE_OPTS)
     if len(rows) != 0:
-        # TODO Raise exception instead
-        print('form id exists, please choose a unique form id')
-        exit(1)
+
+        if replace is True:
+            delete_form(conn, master_user_id, form_id)
+        else:
+            # TODO Raise exception instead
+            print('form id exists, please choose a unique form id')
+            exit(1)
 
     # Add the form
 
@@ -112,9 +117,9 @@ def add_form(conn, master_user_id, form_id, json_schema, ui_schema,
 def list_forms(conn, master_user_id, group_id=None, obj_type=None):
     """
     List all the forms, optionally limited to those available for a single
-    group, and optionall limited to those available for a single object type
+    group, and optionally limited to those available for a single object type
     """
-
+    print('master_user_id', master_user_id)
     qs = conn.getQueryService()
 
     namespace = 'hms.harvard.edu/omero/forms/schema/%'
@@ -242,7 +247,6 @@ def get_form(conn, master_user_id, form_id):
     _ui_schema = None
     _group_ids = []
     _obj_types = []
-
 
     kvs = anno.getMapValue()
     for kv in kvs:
@@ -437,7 +441,6 @@ def list_form_data_orphans(conn, master_user_id):
                 'obj_id': obj[1]
             }
     return
-
 
 
 def add_form_data(conn, master_user_id, form_id, obj_type, obj_id, data,
@@ -690,3 +693,58 @@ def delete_form_kvdata(conn, form_id, obj_type, obj_id):
         pass
         # print cb.getResponse()
     cb.close(True)
+
+
+def _marshal_group(conn, row):
+    ''' Given an ExperimenterGroup row (list) marshals it into a dictionary.
+        Order and type of columns in row is:
+          * id (rlong)
+          * name (rstring)
+          * permissions (dict)
+
+        @param conn OMERO gateway.
+        @type conn L{omero.gateway.BlitzGateway}
+        @param row The Group row to marshal
+        @type row L{list}
+    '''
+    group_id, name, permissions = row
+    group = dict()
+    group['id'] = unwrap(group_id)
+    group['name'] = unwrap(name)
+    group['perm'] = unwrap(unwrap(permissions)['perm'])
+
+    return group
+
+
+def get_managed_groups(conn):
+    """
+    Get list list of groups that the user can administer
+    All groups for admins
+    For other users, only groups of which they are the owner
+
+    Returns a list of ExperimenterGroupI objects
+    """
+
+    user = conn.getUser()
+    groups = []
+    params = omero.sys.ParametersI()
+    service_opts = deepcopy(conn.SERVICE_OPTS)
+    service_opts.setOmeroGroup(-1)
+    params.add('mid', rlong(user.getId()))
+
+    qs = conn.getQueryService()
+    q = """
+        select grp.id,
+               grp.name,
+               grp.details.permissions
+        from ExperimenterGroup grp
+        join grp.groupExperimenterMap grexp
+        where grp.name != 'user'
+        and grexp.child.id = :mid
+        and grexp.owner = false
+        order by lower(grp.name)
+        """
+
+    for e in qs.projection(q, params, service_opts):
+        groups.append(_marshal_group(conn, e[0:3]))
+    return groups
