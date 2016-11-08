@@ -7,7 +7,7 @@ urlpatterns = patterns(
     'django.views.generic.simple',
 
     # Designer App
-    url(r'^designer',
+    url(r'^designer/$',
         views.designer,
         name='omeroforms_designer'),
 
