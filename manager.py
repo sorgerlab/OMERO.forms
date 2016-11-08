@@ -28,9 +28,9 @@ def print_form_list(master_id, group_id=None, obj_type=None):
     print tabulate(
         [
             [
-                form['form_id'],
-                ','.join(str(group_id) for group_id in form['group_ids']),
-                ','.join(form['obj_types'])
+                form['formId'],
+                ','.join(str(group_id) for group_id in form['groupIds']),
+                ','.join(form['objTypes'])
             ] for form in forms
         ],
         headers=headers
@@ -40,7 +40,7 @@ def print_form_list(master_id, group_id=None, obj_type=None):
 def print_form(master_id, form_id):
     """ Print the details of a form """
 
-    form = utils.get_form(conn, master_id, form_id)
+    form = utils.get_form_version(conn, master_id, form_id)
 
     if not form:
         print 'ERROR: No such form'
@@ -48,17 +48,17 @@ def print_form(master_id, form_id):
 
     print tabulate(
         [
-            ['Form ID:', form['form_id']],
+            ['Form ID:', form['id']],
             [
                 'Group IDs:',
-                ','.join(str(group_id) for group_id in form['group_ids'])
+                ','.join(str(group_id) for group_id in form['groupIds'])
             ],
-            ['Object Types:', ','.join(form['obj_types'])]
+            ['Object Types:', ','.join(form['objTypes'])]
         ],
         tablefmt="plain"
     )
     print 'Schema:'
-    print(form['json_schema'])
+    print(form['schema'])
     print 'UI:'
     print(form['ui_schema'])
 
@@ -85,9 +85,9 @@ def print_history(master_id, form_id, obj_type, obj_id, truncate):
     print tabulate(
         [
             [
-                entry['changed_at'],
-                entry['changed_by'],
-                truncate_string(entry['form_data'], truncate)
+                entry['changedAt'],
+                entry['changedBy'],
+                truncate_string(entry['formData'], truncate)
             ] for entry in entries
         ],
         headers=headers
@@ -102,24 +102,30 @@ def print_orphans(master_id):
     print tabulate(
         [
             [
-                orphan['form_id'],
-                orphan['obj_type'],
-                orphan['obj_id']
+                orphan['formId'],
+                orphan['objType'],
+                orphan['objId']
             ] for orphan in orphans
         ],
         headers=headers
     )
 
 
-def add_form(master_id, form_id, json_schema, ui_schema, group_ids, obj_types):
+def add_form(master_id, form_id, form_name, schema, ui_schema, author,
+             obj_types):
     # TODO Try
-    utils.add_form(conn, master_id, form_id, json_schema, ui_schema,
-                   group_ids, obj_types)
+    utils.add_form_version(conn, master_id, form_id, form_name, schema,
+                           ui_schema, author, datetime.now(), obj_types)
 
 
 def delete_form(master_id, form_id):
     # TODO Try
     utils.delete_form(conn, master_id, form_id)
+
+
+def assign_form(master_id, form_id, group_ids):
+    # TODO Try
+    utils.assign_form(conn, master_id, form_id, group_ids)
 
 
 @subcmd('list')
@@ -140,17 +146,17 @@ def form_list(parser, context, args):
 @subcmd('info')
 def form_info(parser, context, args):
 
-    parser.add_argument('form', help='Form ID to print')
+    parser.add_argument('formId', help='Form ID to print')
 
     args = parser.parse_args(args)
 
-    print_form(context.master, args.form)
+    print_form(context.master, args.formId)
 
 
 @subcmd('history')
 def form_history(parser, context, args):
 
-    parser.add_argument('form',
+    parser.add_argument('formId',
                         help='Form ID to get history for')
 
     parser.add_argument('type',
@@ -164,7 +170,7 @@ def form_history(parser, context, args):
 
     args = parser.parse_args(args)
 
-    print_history(context.master, args.form, args.type, args.object,
+    print_history(context.master, args.formId, args.type, args.object,
                   truncate=None if args.verbose else TRUNCATE_LENGTH)
 
 
@@ -184,7 +190,7 @@ def is_valid_file(parser, arg):
 @subcmd('add')
 def form_add(parser, context, args):
 
-    parser.add_argument('form',
+    parser.add_argument('formId',
                         help='Form ID to add (Must be globally unique)')
 
     parser.add_argument('schema',
@@ -197,17 +203,22 @@ def form_add(parser, context, args):
                         metavar="FILE",
                         help='input file with ui')
 
+    # TODO Support supplying username and resolving it to a uid as well
+    parser.add_argument('author',
+                        type=long,
+                        help='Author of the form')
+
     parser.add_argument('--types', '-t',
                         nargs='+',
                         choices=['Project', 'Dataset', 'Screen', 'Plate'],
                         default=[],
                         help='Object types to add form for (Space separated)')
 
-    parser.add_argument('--groups', '-g',
-                        nargs='+',
-                        type=long,
-                        default=[],
-                        help='Group IDs to add form for (Space separated)')
+    # parser.add_argument('--groups', '-g',
+    #                     nargs='+',
+    #                     type=long,
+    #                     default=[],
+    #                     help='Group IDs to add form for (Space separated)')
 
     args = parser.parse_args(args)
 
@@ -217,24 +228,41 @@ def form_add(parser, context, args):
     ui = args.ui.read()
     args.ui.close()
 
-    add_form(context.master, args.form, schema, ui, args.groups, args.types)
+    add_form(context.master, args.formId, args.formId, schema, ui, args.author,
+             args.types)
 
 
 @subcmd('delete')
 def form_delete(parser, context, args):
 
-    parser.add_argument('form',
-                        help='Form ID to delete')
+    parser.add_argument('formId',
+                        help='Form ID to delete. Deletes all versions of a '
+                             'form, any assignments, but not data')
 
     args = parser.parse_args(args)
 
-    delete_form(context.master, args.form)
+    delete_form(context.master, args.formId)
+
+
+@subcmd('assign')
+def form_assign(parser, context, args):
+
+    parser.add_argument('formId',
+                        help='Form ID to assign')
+
+    parser.add_argument('groupIds',
+                        type=long,
+                        nargs='+',
+                        help='Group IDs to assign to (Space separated)')
+
+    args = parser.parse_args(args)
+
+    assign_form(context.master, args.formId, args.groupIds)
 
 
 # TODO Delete data
 # TODO Delete kv?
 # TODO Update form groups/object types
-
 def formmaster(value):
     try:
         return long(value)

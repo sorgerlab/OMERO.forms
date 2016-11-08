@@ -30,97 +30,123 @@ export default class Forms extends React.Component {
     super();
 
     this.state = {
-      forms: {},
-      activeFormId: undefined
+      timestamp: undefined,
+      schema: undefined,
+      uiSchema: undefined,
+      data: undefined,
+      message: ''
     }
 
     this.submitForm = this.submitForm.bind(this);
-    this.loadFromServer = this.loadFromServer.bind(this);
-    this.switchForm = this.switchForm.bind(this);
+    this.loadFormAndData = this.loadFormAndData.bind(this);
+    this.updateMessage = this.updateMessage.bind(this);
+    this.onFormDataChange = this.onFormDataChange.bind(this);
   }
 
   componentDidMount() {
-    this.loadFromServer(this.props.objId, this.props.objType);
+    const { formId, objType, objId } = this.props;
+    this.loadFormAndData(formId, objType, objId);
   }
 
   componentWillReceiveProps(nextProps) {
-    // If the object selected has changed, reload
-    if (nextProps.objId !== this.props.objId ||
-        nextProps.objType !== this.props.objType) {
-      this.loadFromServer(nextProps.objId, nextProps.objType);
-      // Bail out as a reload was required and done
-      return;
+    if (
+      this.props.formId !== nextProps.formId
+      || this.props.objType !== nextProps.objType
+      || this.props.objId !== nextProps.objId
+    ) {
+      this.loadFormAndData(nextProps.formId, nextProps.objType, nextProps.objId);
     }
-
   }
 
-  loadFromServer(objId, objType) {
-
-    let loadRequest = $.ajax({
-      url: this.props.urlDatasetKeys,
-      type: "GET",
-      data: { objId: objId, objType: objType },
-      dataType: 'json',
-      cache: false
+  updateMessage(e) {
+    this.setState({
+      message: e.target.value
     });
+  }
 
-    loadRequest.done(jsonData => {
+  onFormDataChange(form) {
+    this.setState({
+      data: form.formData
+    });
+  }
 
-      let forms = {};
-      jsonData.forms.forEach(form => {
+  loadFormAndData(formId, objType, objId) {
 
-        let formData;
-        if (form.hasOwnProperty('formData')) {
-          formData = JSON.parse(form.formData);
-        }
-
-        forms[form.formId] = {
-          formId: form.formId,
-          jsonSchema: JSON.parse(form.jsonSchema),
-          uiSchema: JSON.parse(form.uiSchema),
-          formData: formData
-        }
-      });
-
-      let activeFormId = undefined;
-
+    // If there is no formId, then there is no form to display. clear the state
+    if (!formId) {
       this.setState({
-        forms: forms,
-        activeFormId: activeFormId,
+        timestamp: undefined,
+        schema: undefined,
+        uiSchema: undefined,
+        data: undefined,
+        message: undefined
       });
 
-    });
+    } else {
+
+      const formRequest = new Request(
+        `${this.props.urls.base}get_form/${formId}/`,
+        {
+          credentials: 'same-origin'
+        }
+      );
+
+      const dataRequest = new Request(
+        `${this.props.urls.base}get_form_data/${formId}/${objType}/${objId}/`,
+        {
+          credentials: 'same-origin'
+        }
+      );
+
+      const formP = fetch(formRequest).then(response => response.json());
+      const dataP = fetch(dataRequest).then(response => response.json());
+
+      Promise.all(
+        [formP, dataP]
+      ).then(
+        ([formJson, dataJson]) => {
+          const form = formJson.form;
+          const data = dataJson.data;
+          this.setState({
+            timestamp: form.timestamp,
+            schema: JSON.parse(form.schema),
+            uiSchema: JSON.parse(form.uiSchema),
+            data: data ? JSON.parse(data.formData) : {},
+            message: ''
+          });
+        }
+      );
+    }
   }
 
   submitForm(formDataSubmission) {
+    const { data, timestamp, message }  = this.state;
+    const { formId, objType, objId } = this.props;
 
     // If there are no changes, bail out as there is nothing to be done
-    if (compareFormData(
-      formDataSubmission.formData,
-      this.state.forms[this.state.activeFormId].formData
-    )) {
-      return;
-    }
+    // TODO Store the form data for comparison
+    // if (compareFormData(
+    //   formDataSubmission.formData,
+    //   data
+    // )) {
+    //   return;
+    // }
 
     let updateForm = {
-      'formData': JSON.stringify(formDataSubmission.formData),
-      'formId': this.state.activeFormId,
-      'objId': this.props.objId,
-      'objType': this.props.objType
+      'data': JSON.stringify(data),
+      'formTimestamp': timestamp,
+      'message': message
     };
 
     // Take the form data, submit this to django
     $.ajax({
-      url: this.props.urlUpdate,
-      type: "POST",
+      url: `${ this.props.urls.base }save_form_data/${ formId }/${ objType }/${ objId }/`,
+      type: 'POST',
       data: JSON.stringify(updateForm),
       success: function(data) {
 
-        const form = this.state.forms[updateForm.formId];
-        form.formData = formDataSubmission.formData
-
         this.setState({
-          forms: this.state.forms
+          message: ''
         });
 
         // Refresh the right panel
@@ -136,71 +162,54 @@ export default class Forms extends React.Component {
     });
   }
 
-  switchForm(options) {
-    this.setState({
-      activeFormId: options !== null ? options.value : undefined
-    });
+  renderForm() {
+    const { timestamp, schema, uiSchema, data, message } = this.state;
+
+    // Check the timestamp as it is guaranteed to be populated if there is a
+    // loaded form
+    if (timestamp) {
+      return (
+        <div>
+          <Form
+            schema={ schema }
+            uiSchema={ uiSchema }
+            formData={ data }
+            onSubmit={ this.submitForm }
+            onChange={ this.onFormDataChange }
+          />
+
+
+          <div className='col-sm-11 col-sm-offset-1'>
+            <div className='form-group'>
+              <label for='message'>Change Message</label>
+                <textarea
+                  className='form-control'
+                  rows='3'
+                  placeholder='Change message...'
+                  value={ message }
+                  onChange={ this.updateMessage }
+                  id='message'
+                />
+              </div>
+            </div>
+
+        </div>
+      );
+    }
   }
 
-  // formData={ this.state.formData }
   render() {
 
-    // If there is a single form which has previously been filled then
-    // display that form directly.
-    // Also, if there is only a single form for a group, display it directly
-
-    // TODO If there is no form title, use the form_id. Perhaps display the
-    // form id anyway
-    let options = [];
-    for (let key in this.state.forms) {
-      if (this.state.forms.hasOwnProperty(key)) {
-        options.push({
-          value: key,
-          label: '' + (this.state.forms[key].jsonSchema.title || '') + ' (' + key + ')'
-        });
-      }
-    }
-
-    let form;
-    if (this.state.activeFormId !== undefined) {
-      const activeForm = this.state.forms[this.state.activeFormId];
-
-      form = (
-        <Form
-          schema={ activeForm.jsonSchema }
-          uiSchema={ activeForm.uiSchema }
-          formData={ activeForm.formData }
-          onSubmit={ this.submitForm }
-        />
-      )
-    }
-
     return (
-      (
-        <div className="container-fluid">
-          <div className="row">
-            <div className="col-sm-10 col-sm-offset-1">
-              <Select
-                  name="formselect"
-                  onChange={ this.switchForm }
-                  options={ options }
-                  value={ this.state.activeFormId }
-                  searchable={false}
-                  className={'form-switcher'}
-              />
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-sm-10 col-sm-offset-1">
-              <div className="panel panel-default">
-                <div className="panel-body">
-                  { form && form }
-                </div>
-              </div>
+      <div className="row">
+        <div className="col-sm-10 col-sm-offset-1">
+          <div className="panel panel-default">
+            <div className="panel-body">
+              { this.renderForm() }
             </div>
           </div>
         </div>
-      )
+      </div>
     );
   }
 }

@@ -1,10 +1,11 @@
 from django.http import (HttpResponse, HttpResponseNotAllowed,
-                         HttpResponseBadRequest)
+                         HttpResponseBadRequest, Http404,
+                         HttpResponseServerError)
 
 from omeroweb.webclient.decorators import login_required, render_response
-from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+from functools import wraps
 
 import omero
 from omero.rtypes import rstring, rlong, wrap, unwrap
@@ -23,6 +24,11 @@ from forms import settings
 from forms import utils
 
 OMERO_FORMS_PRIV_UID = None
+
+
+class HttpResponseUnauthorized(HttpResponse):
+    def __init__(self, message='Unauthorized'):
+        super(HttpResponseUnauthorized, self).__init__(message, status=401)
 
 
 def get_priv_uid(conn):
@@ -59,170 +65,163 @@ class HttpJsonResponse(HttpResponse):
         )
 
 
-@login_required(setGroupContext=True)
-def update(request, conn=None, **kwargs):
+def with_su(func):
+    def _decorator(request, *args, **kwargs):
 
-    if request.method != 'POST':
-        return HttpResponseNotAllowed('Methods allowed: POST')
+        conn = kwargs['conn']
 
-    update_data = json.loads(request.body)
+        # Create a super user connection
+        su_conn = conn.clone()
+        su_conn.setIdentity(
+            settings.OMERO_FORMS_PRIV_USER,
+            settings.OMERO_FORMS_PRIV_PASSWORD
+        )
+        su_conn.connect()
 
-    form_id = update_data['formId']
-    form_data = update_data['formData']
-    obj_type = update_data['objType']
-    obj_id = update_data['objId']
-    changed_at = datetime.now()
-    changed_by = conn.user.getName()
+        if not su_conn.connect():
+            return HttpResponseServerError(
+                'OMERO.forms master form user is possibly misconfigured'
+            )
 
-    group_id = request.session.get('active_group')
-    if group_id is None:
-        group_id = conn.getEventContext().groupId
+        kwargs['su_conn'] = su_conn
+        kwargs['form_master'] = get_priv_uid(conn)
+        response = func(request, *args, **kwargs)
 
-    # Create a super user connection
-    su_conn = conn.clone()
-    su_conn.setIdentity(
-        settings.OMERO_FORMS_PRIV_USER,
-        settings.OMERO_FORMS_PRIV_PASSWORD
-    )
-    su_conn.connect()
-
-    if not su_conn.connect():
-        # TODO Throw Exception
-        pass
-
-    # TODO Check that the form submitted is valid for the group it is being
-    # submitted for
-
-    # TODO Check that the user is a member of the current group and that the
-    # dataset is in that group
-
-    utils.add_form_data(su_conn, get_priv_uid(conn), form_id,
-                        obj_type, obj_id, form_data, changed_by, changed_at)
-
-    utils.add_form_data_to_obj(conn, form_id, obj_type, obj_id, form_data)
-
-    return HttpResponse('')
+        return response
+    return wraps(func)(_decorator)
 
 
 @login_required(setGroupContext=True)
-def dataset_keys(request, conn=None, **kwargs):
+def designer(request, conn=None, **kwargs):
+    context = {}
+    return render(request, 'forms/designer.html', context)
 
-    # TODO Indicate whether this user can populate the form.
-    # Private group: Yes, if own data, which it always will be.
-    # Read-only group: Yes, if owner. No, otherwise
-    # Read-annotate group: Yes, always
-    # Read-write group: Forms disabled
+
+@login_required(setGroupContext=True)
+@with_su
+def list_forms(request, conn=None, su_conn=None, form_master=None, **kwargs):
 
     if request.method != 'GET':
         return HttpResponseNotAllowed('Methods allowed: GET')
 
-    obj_id = request.GET.get("objId")
-
-    if not obj_id:
-        return HttpResponseBadRequest('Object ID required')
-
-    obj_id = long(obj_id)
-
-    obj_type = request.GET.get("objType")
-
-    if not obj_type:
-        return HttpResponseBadRequest('Object type required')
-
-    obj_types = ['Dataset', 'Project', 'Plate', 'Screen']
-    if obj_type not in obj_types:
-        return HttpResponseBadRequest(
-            'Object type in ' + ','.join(obj_types) + ' required'
-        )
-
-    group_id = request.session.get('active_group')
-    if group_id is None:
-        group_id = conn.getEventContext().groupId
-
-    # Set the desired group context
-    # TODO Test when this takes hold if at all?
-    # conn.SERVICE_OPTS.setOmeroGroup(group_id)
-
-    su_conn = conn.clone()
-
-    su_conn.setIdentity(
-        settings.OMERO_FORMS_PRIV_USER,
-        settings.OMERO_FORMS_PRIV_PASSWORD
-    )
-
-    if not su_conn.connect():
-        # TODO Throw Exception
-        pass
-
-    forms = [
-        {
-            'formId': form['form_id'],
-            'jsonSchema': form['json_schema'],
-            'uiSchema': form['ui_schema'],
-            'groupIds': form['group_ids'],
-            'objTypes': form['obj_types']
-        }
-        for form
-        in utils.list_forms(su_conn, get_priv_uid(conn), group_id, obj_type)
-    ]
-
-    # # TODO Handle this in a single query?
-    for form in forms:
-        form_data = utils.get_form_data(
-            su_conn, get_priv_uid(conn), form['formId'],
-            obj_type, obj_id
-        )
-        if form_data is not None:
-            form['formData'] = form_data['form_data']
-
     return HttpJsonResponse(
         {
-            'forms': forms
+            'forms': list(utils.list_forms(su_conn, form_master))
         },
         cls=utils.DatetimeEncoder
     )
 
 
 @login_required(setGroupContext=True)
-def designer(request, conn=None, **kwargs):
-    context = {}
-    return render(request, "forms/designer.html", context)
-
-
-@login_required(setGroupContext=True)
-def list_forms(request, conn=None, **kwargs):
+@with_su
+def list_applicable_forms(request, obj_type=None, conn=None, su_conn=None,
+                          form_master=None, **kwargs):
 
     if request.method != 'GET':
         return HttpResponseNotAllowed('Methods allowed: GET')
 
-    # Create a super user connection
-    su_conn = conn.clone()
-    su_conn.setIdentity(
-        settings.OMERO_FORMS_PRIV_USER,
-        settings.OMERO_FORMS_PRIV_PASSWORD
-    )
-    su_conn.connect()
+    if obj_type is not None and obj_type not in ['Project', 'Dataset',
+                                                 'Plate', 'Screen']:
+        return HttpResponseBadRequest('%s not a valid obj_type' % obj_type)
 
-    if not su_conn.connect():
-        # TODO Throw Exception
-        pass
-
-    # TODO Should only return groupIds for groups that this user can
-    # assign
-    forms = [
-        {
-            'formId': form['form_id'],
-            'jsonSchema': form['json_schema'],
-            'uiSchema': form['ui_schema'],
-            'groupIds': form['group_ids'],
-            'objTypes': form['obj_types']
-        }
-        for form
-        in utils.list_forms(su_conn, get_priv_uid(conn))
-    ]
+    group_id = request.session.get('active_group')
+    if group_id is None:
+        group_id = conn.getEventContext().groupId
 
     return HttpJsonResponse(
         {
-            'forms': forms
+            'forms': list(utils.list_forms(su_conn, form_master, group_id,
+                                           obj_type))
+        },
+        cls=utils.DatetimeEncoder
+    )
+
+
+@login_required(setGroupContext=True)
+@with_su
+def get_form(request, form_id, su_conn=None, form_master=None,
+             **kwargs):
+
+    if request.method != 'GET':
+        return HttpResponseNotAllowed('Methods allowed: GET')
+
+    form = utils.get_form_version(su_conn, form_master, form_id)
+
+    if form is None:
+        raise Http404('Form: %s, not found' % form_id)
+
+    return HttpJsonResponse(
+        {
+            'form': form
+        },
+        cls=utils.DatetimeEncoder
+    )
+
+
+@login_required(setGroupContext=True)
+@with_su
+def get_form_data(request, form_id, obj_type, obj_id, conn=None, su_conn=None,
+                  form_master=None, **kwargs):
+
+    if request.method != 'GET':
+        return HttpResponseNotAllowed('Methods allowed: GET')
+
+    try:
+        obj_id = long(obj_id)
+    except:
+        return HttpResponseBadRequest('Object ID must be a long integer')
+
+    if obj_type not in ['Project', 'Dataset', 'Plate', 'Screen']:
+        return HttpResponseBadRequest('%s not a valid obj_type' % obj_type)
+
+    # Check permissions
+    obj = conn.getObject(obj_type, obj_id)
+    if obj is None:
+        raise Http404('If this form exists, this user does '
+                      'not have permissions to read it')
+
+    form_data = utils.get_form_data(su_conn,
+                                    form_master,
+                                    form_id,
+                                    obj_type,
+                                    obj_id)
+
+    return HttpJsonResponse(
+        {
+            'data': form_data
+        },
+        cls=utils.DatetimeEncoder
+    )
+
+
+@login_required(setGroupContext=True)
+def get_managed_groups(request, conn=None, **kwargs):
+
+    if request.method != 'GET':
+        return HttpResponseNotAllowed('Methods allowed: GET')
+
+    return HttpJsonResponse({
+        'groups': utils.get_managed_groups(conn)
+    }, cls=utils.DatetimeEncoder)
+
+
+@login_required(setGroupContext=True)
+@with_su
+def get_form_assignments(request, conn=None, su_conn=None, form_master=None,
+                         **kwargs):
+
+    if request.method != 'GET':
+        return HttpResponseNotAllowed('Methods allowed: GET')
+
+    managed_group_ids = [group['id']
+                         for group
+                         in utils.get_managed_groups(conn)]
+
+    return HttpJsonResponse(
+        {
+            'assignments': utils.get_group_assignments(su_conn,
+                                                       form_master,
+                                                       managed_group_ids)
         },
         cls=utils.DatetimeEncoder
     )
@@ -230,27 +229,75 @@ def list_forms(request, conn=None, **kwargs):
 
 @login_required(setGroupContext=True)
 @csrf_exempt
-def add_form(request, conn=None, **kwargs):
+def get_users(request, conn=None, **kwargs):
 
-    if request.method != 'POST' and request.method != 'PUT':
-        return HttpResponseNotAllowed('Methods allowed: POST, PUT')
-
-    # Create a super user connection
-    su_conn = conn.clone()
-    su_conn.setIdentity(
-        settings.OMERO_FORMS_PRIV_USER,
-        settings.OMERO_FORMS_PRIV_PASSWORD
-    )
-    su_conn.connect()
-
-    if not su_conn.connect():
-        # TODO Throw Exception
-        pass
+    if request.method != 'POST':
+        return HttpResponseNotAllowed('Methods allowed: POST')
 
     data = json.loads(request.body)
-    form_id = data.get('formId')
-    schema = data.get('jsonSchema', '')
+
+    user_ids = [long(g) for g in data['userIds']]
+
+    users = list(utils.get_users(conn, user_ids))
+
+    return HttpJsonResponse({
+        'users': users,
+    }, cls=utils.DatetimeEncoder)
+
+
+@login_required(setGroupContext=True)
+@with_su
+def get_form_data_history(request, form_id, obj_type, obj_id, conn=None,
+                          su_conn=None, form_master=None, **kwargs):
+
+    if request.method != 'GET':
+        return HttpResponseNotAllowed('Methods allowed: GET')
+
+    if obj_type not in ['Project', 'Dataset', 'Plate', 'Screen']:
+        return HttpResponseBadRequest('%s not a valid obj_type' % obj_type)
+
+    try:
+        obj_id = long(obj_id)
+    except:
+        return HttpResponseBadRequest('Object ID must be a long integer')
+
+    # Check permissions
+    obj = conn.getObject(obj_type, obj_id)
+    if obj is None:
+        raise Http404('If this data exists, this user does '
+                      'not have permissions to read it')
+
+    data = list(utils.get_form_data_history(
+        su_conn,
+        form_master,
+        form_id,
+        obj_type,
+        obj_id
+    ))
+
+    form_versions = utils.get_form_versions(su_conn, form_master, form_id)
+
+    return HttpJsonResponse({
+        'data': data,
+        'versions': form_versions
+    }, cls=utils.DatetimeEncoder)
+
+
+@login_required(setGroupContext=True)
+@with_su
+@csrf_exempt
+def save_form(request, conn=None, su_conn=None, form_master=None, **kwargs):
+    pass
+    # TODO This needs updating to new layout
+
+    if request.method != 'POST':
+        return HttpResponseNotAllowed('Methods allowed: POST')
+
+    data = json.loads(request.body)
+    form_id = data.get('id')
+    schema = data.get('schema', '')
     ui_schema = data.get('uiSchema', '')
+    message = data.get('message', '')
     obj_types = data.get('objTypes', [])
 
     # Ensure there is at least a formId
@@ -259,104 +306,216 @@ def add_form(request, conn=None, **kwargs):
             'Adding or updating a form requires a formId to be specified'
         )
 
+    form_id = form_id.strip()
+
+    if len(form_id) == 0:
+        return HttpResponseBadRequest(
+            'Adding or updating a form requires a formId to be specified'
+        )
+
+    # Ensure that if this form already exists, the user has permission to
+    # overwrite it (i.e. is an owner)
+    existing_form = utils.get_form_version(su_conn, form_master, form_id)
+    if existing_form is not None:
+        if conn.user.getId() not in existing_form['owners']:
+            return HttpResponseUnauthorized(
+                'Updating a form requires ownership'
+            )
+
     # Ensure the object type is valid
     for obj_type in obj_types:
-        assert obj_type in ['Project', 'Dataset', 'Screen', 'Plate']
+        if obj_type not in ['Project', 'Dataset', 'Screen', 'Plate']:
+            return HttpResponseBadRequest('%s not a valid obj_type' % obj_type)
 
-    existing_form = utils.get_form(su_conn, get_priv_uid(conn), form_id)
+    form_version = utils.add_form_version(
+        su_conn, form_master, form_id, schema, ui_schema,
+        conn.user.getId(), datetime.now(), message, obj_types
+    )
 
-    group_ids = []
-    if existing_form is not None:
-        # TODO Check if the current user has the rights to overwrite this form
-        print existing_form
-        group_ids = existing_form['group_ids']
-
-
-    utils.add_form(su_conn, get_priv_uid(conn), form_id, schema,
-                   ui_schema, group_ids=group_ids, obj_types=obj_types,
-                   replace=True)
-
-    return HttpJsonResponse({}, cls=utils.DatetimeEncoder)
+    return HttpJsonResponse({
+        'form': form_version
+    }, cls=utils.DatetimeEncoder)
 
 
 @login_required(setGroupContext=True)
-@csrf_exempt
-def assign_form(request, conn=None, **kwargs):
+@with_su
+def save_form_data(request, form_id, obj_type, obj_id, conn=None, su_conn=None,
+                   form_master=None, **kwargs):
 
     if request.method != 'POST':
         return HttpResponseNotAllowed('Methods allowed: POST')
 
-    # Create a super user connection
-    su_conn = conn.clone()
-    su_conn.setIdentity(
-        settings.OMERO_FORMS_PRIV_USER,
-        settings.OMERO_FORMS_PRIV_PASSWORD
-    )
-    su_conn.connect()
+    if obj_type not in ['Project', 'Dataset', 'Plate', 'Screen']:
+        return HttpResponseBadRequest('%s not a valid obj_type' % obj_type)
 
-    if not su_conn.connect():
-        # TODO Throw Exception
-        pass
+    try:
+        obj_id = long(obj_id)
+    except:
+        return HttpResponseBadRequest('Object ID must be a long integer')
+
+    update_data = json.loads(request.body)
+    form_timestamp = update_data['formTimestamp']
+    form_data = update_data['data']
+    message = update_data['message']
+    changed_at = datetime.now()
+    changed_by = conn.user.getId()
+
+    group_id = request.session.get('active_group')
+    if group_id is None:
+        group_id = conn.getEventContext().groupId
+
+    # Check permissions
+    obj = conn.getObject(obj_type, obj_id)
+    if obj is None:
+        raise Http404('If this form exists, this user does '
+                      'not have permissions to read it')
+
+    if obj.canAnnotate() is False:
+        return HttpResponseUnauthorized('This user does not have permission '
+                                        'to submit data to this form')
+
+    utils.add_form_data(su_conn, form_master, form_id, form_timestamp,
+                        message, obj_type, obj_id, form_data, changed_by,
+                        changed_at)
+
+    utils.add_form_data_to_obj(su_conn, conn, form_id, obj_type, obj_id,
+                               form_data)
+
+    return HttpResponse('')
+
+
+@login_required(setGroupContext=True)
+@with_su
+@csrf_exempt
+def save_form_assignment(request, conn=None, su_conn=None, form_master=None,
+                         **kwargs):
+
+    if request.method != 'POST':
+        return HttpResponseNotAllowed('Methods allowed: POST')
 
     data = json.loads(request.body)
 
     form_id = data['formId']
-    group_ids = data['groupIds']
+    group_ids = [long(g) for g in data['groupIds']]
 
-    existing_form = utils.get_form(su_conn, get_priv_uid(conn), form_id)
+    # Ensure there is at least a formId
+    if form_id is None:
+        return HttpResponseBadRequest(
+            'Adding or updating a form requires a formId to be specified'
+        )
 
-    assert existing_form is not None
+    form_id = form_id.strip()
 
-    utils.add_form(
-        su_conn,
-        get_priv_uid(conn),
-        form_id,
-        existing_form['json_schema'],
-        existing_form['ui_schema'],
-        group_ids,
-        existing_form['obj_types'],
-        True
+    if len(form_id) == 0:
+        return HttpResponseBadRequest(
+            'Adding or updating a form requires a formId to be specified'
+        )
+
+    # Get the existing assignments
+    current = set(utils.get_form_assignments(su_conn, form_master, form_id))
+    requested = set(group_ids)
+    owned = set([g['id'] for g in utils.get_managed_groups(conn)])
+
+    to_add = requested - current
+    to_remove = (owned - requested) & current
+
+    # Disallow assigning groups that the user does not have permissions on
+    disallowed_groups = list((requested - owned))
+    if len(disallowed_groups) > 0:
+        return HttpResponseUnauthorized('Can not assign to groups: %s' %
+                                        disallowed_groups)
+
+    if len(to_add) > 0 or len(to_remove) > 0:
+        utils.assign_form(su_conn, form_master, form_id, list(to_add),
+                          list(to_remove))
+
+    # TODO Copy of get_form_assignments, refactor
+    managed_group_ids = [group['id']
+                         for group
+                         in utils.get_managed_groups(conn)]
+
+    return HttpJsonResponse(
+        {
+            'assignments': utils.get_group_assignments(su_conn,
+                                                       form_master,
+                                                       managed_group_ids)
+        },
+        cls=utils.DatetimeEncoder
     )
 
-    return HttpJsonResponse({}, cls=utils.DatetimeEncoder)
+
+# OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD
 
 
-@login_required(setGroupContext=True)
-def managed_groups(request, conn=None, **kwargs):
+#
+#
+#
 
-    return HttpJsonResponse({
-        'groups': utils.get_managed_groups(conn)
-    }, cls=utils.DatetimeEncoder)
-
-
-@login_required(setGroupContext=True)
-def form_data(request, form_id, obj_type, obj_id, conn=None, **kwargs):
-    print 'form_data'
-    print request
-
-    # Create a super user connection
-    su_conn = conn.clone()
-    su_conn.setIdentity(
-        settings.OMERO_FORMS_PRIV_USER,
-        settings.OMERO_FORMS_PRIV_PASSWORD
-    )
-    su_conn.connect()
-
-    if not su_conn.connect():
-        # TODO Throw Exception
-        pass
-
-    form_data = utils.get_form_data_history(
-        su_conn,
-        get_priv_uid(conn),
-        form_id,
-        obj_type,
-        obj_id
-    )
-
-    x = [f for f in form_data]
-    print x
-
-    return HttpJsonResponse({
-        'formData': x
-    }, cls=utils.DatetimeEncoder)
+#
+# #
+# # @login_required(setGroupContext=True)
+# # def dataset_keys(request, conn=None, **kwargs):
+# #
+# #     # TODO Indicate whether this user can populate the form.
+# #     # Private group: Yes, if own data, which it always will be.
+# #     # Read-only group: Yes, if owner. No, otherwise
+# #     # Read-annotate group: Yes, always
+# #     # Read-write group: Forms disabled
+# #
+# #     if request.method != 'GET':
+# #         return HttpResponseNotAllowed('Methods allowed: GET')
+# #
+# #     obj_id = request.GET.get('objId')
+# #
+# #     if not obj_id:
+# #         return HttpResponseBadRequest('Object ID required')
+# #
+# #     obj_id = long(obj_id)
+# #
+# #     obj_type = request.GET.get('objType')
+# #
+# #     if not obj_type:
+# #         return HttpResponseBadRequest('Object type required')
+# #
+# #     obj_types = ['Dataset', 'Project', 'Plate', 'Screen']
+# #     if obj_type not in obj_types:
+# #         return HttpResponseBadRequest(
+# #             'Object type in ' + ','.join(obj_types) + ' required'
+# #         )
+# #
+# #     group_id = request.session.get('active_group')
+# #     if group_id is None:
+# #         group_id = conn.getEventContext().groupId
+# #
+# #     # Set the desired group context
+# #     # TODO Test when this takes hold if at all?
+# #     # conn.SERVICE_OPTS.setOmeroGroup(group_id)
+# #
+# #     su_conn = conn.clone()
+# #
+# #     su_conn.setIdentity(
+# #         settings.OMERO_FORMS_PRIV_USER,
+# #         settings.OMERO_FORMS_PRIV_PASSWORD
+# #     )
+# #
+# #     if not su_conn.connect():
+# #         # TODO Throw Exception
+# #         pass
+# #
+# #     forms = utils.list_forms(su_conn, get_priv_uid(conn), group_id, obj_type)
+# #
+# #     # # TODO Handle this in a single query?
+# #     for form in forms:
+# #         form_data = utils.get_form_data(
+# #             su_conn, get_priv_uid(conn), form['formId'],
+# #             obj_type, obj_id
+# #         )
+# #         if form_data is not None:
+# #             form['formData'] = form_data['formData']
+# #
+# #     return HttpJsonResponse(
+# #         {
+# #             'forms': forms
+# #         },
+# #         cls=utils.DatetimeEncoder
+# #     )

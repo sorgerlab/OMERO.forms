@@ -7,17 +7,14 @@
 $(function() {
 
   var pluginIndex = {{ forloop.counter }};
-  var urlDatasetKeys="{% url 'omeroforms_dataset_keys' %}";
-  var urlUpdate="{% url 'omeroforms_update' %}";
   var urls = {
-    base: "{% url 'omeroforms_base' %}",
-    urlDatasetKeys: "{% url 'omeroforms_dataset_keys' %}"
+    base: "{% url 'omeroforms_base' %}"
   };
 
   var reactRender = function(datatree, selectedNode) {
     var objId = selectedNode.data.obj.id;
     var objType = selectedNode.type.charAt(0).toUpperCase() + selectedNode.type.slice(1);
-    omeroforms.default(objId, objType, urlDatasetKeys, urlUpdate, urls);
+    omeroforms.default(objId, objType, urls);
   };
 
   $("#omero_forms_panel").omeroweb_center_plugin({

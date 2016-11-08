@@ -1,4 +1,5 @@
 from omero_basics import OMEROConnectionManager
+from datetime import datetime
 import utils
 
 form_schemas = [
@@ -803,10 +804,12 @@ conn_manager = OMEROConnectionManager(config_file="omero.cfg")
 conn = conn_manager.connect()
 
 master_user_id = 252L
+dpwrussell_id = 2L
 group_ids = [203L]
 obj_types = ['Dataset']
 
 for form in utils.list_forms(su_conn, master_user_id):
+    print form
     utils.delete_form(su_conn, master_user_id, form['form_id'])
     utils.delete_form_data(su_conn, master_user_id, form['form_id'], 'Dataset',
                            251L)
@@ -815,5 +818,7 @@ for form in utils.list_forms(su_conn, master_user_id):
 for form_schema in form_schemas:
     form_id, form_json, form_ui = form_schema
     # print form_id, form_json, form_ui
-    utils.add_form(su_conn, master_user_id, form_id, form_json, form_ui,
-                   group_ids, obj_types)
+
+    utils.add_form_version(su_conn, master_user_id, form_id, form_id + ' name',
+                           form_json, form_ui, dpwrussell_id, datetime.now(),
+                           obj_types)

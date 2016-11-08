@@ -3,81 +3,55 @@ import ReactDOM from 'react-dom';
 import Select from 'react-select';
 import Form from "react-jsonschema-form";
 
+const padDate = v => {
+  return v < 10 ? '0' + v : v
+};
+
+const formatDate = dateString => {
+  const d = new Date(dateString);
+    return d.getFullYear() + '-'
+    + padDate(d.getMonth() + 1) + '-'
+    + padDate(d.getDate()) + ' '
+    + padDate(d.getHours()) + ':'
+    + padDate(d.getMinutes()) + ':'
+    + padDate(d.getSeconds());
+};
+
 export default class History extends React.Component {
 
   constructor() {
     super();
 
     this.state = {
-      forms: {},
-      formId: undefined,
       formData: [],
+      formVersions: {},
       dataIndex: undefined
     }
 
-    this.loadFromServer = this.loadFromServer.bind(this);
-    this.switchForm = this.switchForm.bind(this);
     this.switchData = this.switchData.bind(this);
   }
 
   componentDidMount() {
-    this.loadFromServer();
+    const { formId, objType, objId } = this.props;
+    this.getData(formId, objType, objId);
   }
 
   componentWillReceiveProps(nextProps) {
-    // If the object selected has changed, reload
-    if (nextProps.objId !== this.props.objId ||
-        nextProps.objType !== this.props.objType) {
-      this.loadFromServer();
-      this.getData();
-      // Bail out as a reload was required and done
-      return;
+    // If the object or form selected has changed, reload
+    if (
+      nextProps.formId !== this.props.formId
+      || nextProps.objId !== this.props.objId
+      || nextProps.objType !== this.props.objType
+    ) {
+      this.getData(nextProps.formId, nextProps.objType, nextProps.objId);
     }
-
   }
 
-  loadFromServer() {
-
-    const { urls, objType, objId } = this.props;
-
-    let loadRequest = $.ajax({
-      url: urls.urlDatasetKeys,
-      type: "GET",
-      data: { objId: objId, objType: objType },
-      dataType: 'json',
-      cache: false
-    });
-
-    loadRequest.done(jsonData => {
-
-      let forms = {};
-      jsonData.forms.forEach(form => {
-
-        forms[form.formId] = {
-          formId: form.formId,
-          jsonSchema: JSON.parse(form.jsonSchema),
-          uiSchema: JSON.parse(form.uiSchema)
-        }
-      });
-
-      this.setState({
-        forms: forms,
-        formId: Object.keys(forms).length === 1 ? forms[Object.keys(forms)[0]].formId : undefined
-      });
-
-      if (Object.keys(forms).length === 1) {
-        this.getData();
-      }
-
-    });
-  }
-
-  getData() {
-    const { formId } = this.state;
-    const { urls, objType, objId } = this.props;
+  getData(formId, objType, objId) {
+    const { urls, users, lookupUsers } = this.props;
 
     const request = new Request(
-      `${urls.base}form_data/${formId}/${objType}/${objId}`,
+      `${urls.base}get_form_data_history/${formId}/${objType}/${objId}/`,
       {
         credentials: 'same-origin'
       }
@@ -88,113 +62,109 @@ export default class History extends React.Component {
     ).then(
       response => response.json()
     ).then(
-      jsonData => this.setState({
-        formData: jsonData.formData.sort((a, b) => a >= b),
-        dataIndex: jsonData.formData.length-1
-      })
+      jsonData => {
+
+        const formVersions = {};
+        jsonData.versions.forEach(version => {
+          formVersions[version.timestamp] = version;
+        });
+
+        this.setState({
+          formData: jsonData.data.sort((a, b) => b.changedAt >= a.changedAt),
+          dataIndex: 0,
+          formVersions: formVersions
+        });
+
+        const uids = Array.from(new Set(jsonData.data.map(d => d.changedBy))).filter(uid => !users.hasOwnProperty(uid));
+        if (uids.length > 0) {
+          lookupUsers(uids);
+        }
+
+      }
     );
   }
 
-  switchForm(options) {
+  switchData(i, e) {
+    e.preventDefault();
     this.setState({
-      formId: options !== null ? options.value : undefined
+      dataIndex: i
     });
   }
 
-  switchData(options) {
-    this.setState({
-      dataIndex: options.target.value
-    });
-  }
+  renderForm() {
+    const { formData, dataIndex, formVersions } = this.state;
 
-  render() {
+    if (
+      formData.length > 0
+      && dataIndex !== undefined
+    ) {
+      const data = formData[dataIndex];
+      const version = formVersions[data.formTimestamp];
 
-    const { formId, formData, dataIndex } = this.state;
-
-    // If there is a single form which has previously been filled then
-    // display that form directly.
-    // Also, if there is only a single form for a group, display it directly
-
-    // TODO If there is no form title, use the form_id. Perhaps display the
-    // form id anyway
-    let options = [];
-    for (let key in this.state.forms) {
-      if (this.state.forms.hasOwnProperty(key)) {
-        options.push({
-          value: key,
-          label: '' + (this.state.forms[key].jsonSchema.title || '') + ' (' + key + ')'
-        });
-      }
-    }
-
-    let form;
-    if (formId !== undefined) {
-      const activeForm = this.state.forms[formId];
-
-      form = (
+      return (
         <Form
-          schema={ activeForm.jsonSchema }
-          uiSchema={ activeForm.uiSchema }
-          formData={ dataIndex !== undefined ? JSON.parse(formData[dataIndex].form_data) : undefined }
+          schema={ JSON.parse(version.schema) }
+          uiSchema={ JSON.parse(version.uiSchema) }
+          formData={ JSON.parse(data.formData) }
+          onSubmit={ this.submitForm }
         >
           <button type="button" className="btn btn-primary disabled">Submit</button>
         </Form>
-      )
+      );
     }
 
-    // <Select
-    //   name="dataselect"
-    //   onChange={ this.switchData }
-    //   options={ formData.map((d, i) => ({
-    //     value: i,
-    //     label: `${d.changed_by}_${d.changed_at}`
-    //   })) }
-    //   value={ dataIndex }
-    //   searchable={ false }
-    // />
+  }
+
+  renderPills() {
+    const { formData, dataIndex } = this.state;
+    const { users } = this.props;
+
+    if (
+      formData.length > 0
+      || dataIndex !== undefined
+    ) {
+
+      const pills = formData.map((d, i) => {
+        const data = formData[i];
+        const changedBy = users[parseInt(data.changedBy)] || data.changedBy;
+        return (
+          <li key={ i } role="presentation" className={ dataIndex === i ? 'active' : ''}>
+            <a href="#" onClick={ this.switchData.bind(this, i) }>
+              { `${ formatDate(data.changedAt) } (${ changedBy })` }
+              <br/>
+              { `${ data.message }` }
+            </a>
+          </li>
+        );
+      });
+
+      return (
+        <ul className="nav nav-pills nav-stacked">
+          { pills }
+        </ul>
+      );
+    }
+  }
+
+  render() {
+    const { formData, dataIndex } = this.state;
 
     return (
-      (
-        <div className="container-fluid">
-          <div className="row">
-            <div className="col-sm-10 col-sm-offset-1">
-              <Select
-                  name="formselect"
-                  onChange={ this.switchForm }
-                  options={ options }
-                  value={ formId }
-                  searchable={false}
-                  className={'form-switcher'}
-              />
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-sm-10 col-sm-offset-1">
-              { formData && dataIndex &&
-                `${formData[dataIndex].changed_by} - ${formData[dataIndex].changed_at}`
-              }
-              {
-                formData && dataIndex &&
-                <input type="range" id="dataselect" min="0" max={ Object.keys(formData).length-1 } className="form-control" onInput={ this.switchData } value={ dataIndex }/>
-              }
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-sm-10 col-sm-offset-1">
+      <div>
 
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-sm-10 col-sm-offset-1">
-              <div className="panel panel-default">
-                <div className="panel-body">
-                  { form && form }
-                </div>
-              </div>
+        <div className="col-sm-6">
+          { this.renderPills() }
+        </div>
+        <div className='col-sm-6'>
+          <div className="panel panel-default">
+            <div className="panel-body">
+              { this.renderForm() }
             </div>
           </div>
         </div>
-      )
+
+      </div>
     );
   }
+
 }

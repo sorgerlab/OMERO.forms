@@ -6,14 +6,6 @@ from datetime import datetime
 import re
 from copy import deepcopy
 
-# def as_form_master(f):
-#     @wraps(f)
-#     def wrapper(*args, **kwargs):
-#         print args
-#         print kwargs
-#         return f(*args, **kwargs)
-#     return wrapper
-
 
 class DatetimeEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -43,24 +35,124 @@ def get_formmaster_id(conn, formmaster_username):
     return rows[0][0].val
 
 
-def add_form(conn, master_user_id, form_id, json_schema, ui_schema,
-             group_ids=[], obj_types=[], replace=False):
+def add_form_version(conn, master_user_id, form_id, schema, ui_schema,
+                     author, timestamp, message, obj_types=[]):
     """
-    Add a form to the form master user and mark it for use in the designated
-    groups.
+    Add a form version to the form master user. Creates form wrapper if
+    it does not already exist
 
     form_id must be globally unique
     """
 
     # TODO Validate schemas??
-    qs = conn.getQueryService()
 
-    namespace = 'hms.harvard.edu/omero/forms/schema/%s' % (form_id)
+    namespace = 'hms.harvard.edu/omero/forms/schema/%s' % form_id
     params = omero.sys.ParametersI()
     params.add('mid', omero.rtypes.wrap(long(master_user_id)))
     params.add('ns', omero.rtypes.wrap(namespace))
 
-    # Ensure that there is no other form with this ID
+    json_data = json.dumps({
+        'id': form_id,
+        'schema': schema,
+        'uiSchema': ui_schema,
+        'author': author,
+        'timestamp': timestamp.isoformat(),
+        'message': message
+    })
+
+    # Update the existing annotation if there is one
+    anno = _get_form(conn, master_user_id, form_id)
+    if anno is not None:
+
+        kvs = anno.getMapValue()
+
+        # Make any updates to the object types
+        new_kvs = []
+        for kv in kvs:
+            if kv.name == 'objType':
+                if kv.value in obj_types:
+                    obj_types.remove(kv.value)
+                    new_kvs.append(kv)
+            else:
+                new_kvs.append(kv)
+
+        # Add any missing types
+        for obj_type in obj_types:
+            new_kvs.append(
+                omero.model.NamedValue('objType', obj_type)
+            )
+
+        # Add the new version
+        new_kvs.insert(0, omero.model.NamedValue(
+            timestamp.isoformat(), json_data
+        ))
+
+        kvs[:] = new_kvs
+
+        us = conn.getUpdateService()
+        us.saveObject(anno, conn.SERVICE_OPTS)
+
+    # If it does not already exist, create a new one
+    else:
+
+        mapAnn = omero.gateway.MapAnnotationWrapper(conn)
+        mapAnn.setNs(namespace)
+
+        mapAnn.setValue(
+            [
+                ['id', form_id],
+                [timestamp.isoformat(), json_data],
+                ['owner', str(author)]
+            ] + [['objType', obj_type] for obj_type in obj_types]
+        )
+        mapAnn.save()
+
+        link = omero.model.ExperimenterAnnotationLinkI()
+        link.parent = omero.model.ExperimenterI(master_user_id, False)
+        link.child = mapAnn._obj
+
+        update = conn.getUpdateService()
+        update.saveObject(link, conn.SERVICE_OPTS)
+
+    # TODO Return a single object the same as an item from get_form
+    return {
+        'id': form_id,
+        'schema': schema,
+        'uiSchema': ui_schema,
+        'author': author,
+        'timestamp': timestamp,
+        'message': message,
+        'objTypes': obj_types
+    }
+
+
+def _get_assignments(conn, master_user_id, group_id=None, form_id=None):
+    """
+    Get all the assignments, optionally limited to a group and/or form. In
+    the case of both, there should only be a single result.
+
+    Returns a list of assignment MapAnnotationI objects or None
+    """
+
+    qs = conn.getQueryService()
+
+    namespace = 'hms.harvard.edu/omero/forms/assignments'
+
+    # TODO Properly test this
+    if group_id is not None and form_id is not None:
+        namespace += '/%s/%s' % (form_id, group_id)
+    elif group_id is not None:
+        namespace += '/%%/%d' % group_id
+    elif form_id is not None:
+        namespace += '/%s/%%' % form_id
+    else:
+        namespace += '/%/%'
+
+    params = omero.sys.ParametersI()
+    params.add('mid', omero.rtypes.wrap(long(master_user_id)))
+    params.add('ns', omero.rtypes.wrap(namespace))
+
+    # Get all the assignments
     q = """
         SELECT anno
         FROM Experimenter user
@@ -68,50 +160,57 @@ def add_form(conn, master_user_id, form_id, json_schema, ui_schema,
         JOIN links.child anno
         WHERE anno.class = MapAnnotation
         AND user.id = :mid
-        AND anno.ns = :ns
         """
 
+    if group_id is not None and form_id is not None:
+        q += ' AND anno.ns = :ns'
+    else:
+        q += ' AND anno.ns LIKE :ns'
+
     rows = qs.projection(q, params, conn.SERVICE_OPTS)
-    if len(rows) != 0:
 
-        if replace is True:
-            delete_form(conn, master_user_id, form_id)
-        else:
-            # TODO Raise exception instead
-            print('form id exists, please choose a unique form id')
-            exit(1)
+    if len(rows) == 0:
+        return None
 
-    # Add the form
+    return [row[0].val for row in rows]
 
-    # Basic form data
-    keyValueData = [
-        ["json_schema", json_schema],
-        ["ui_schema", ui_schema],
-        ["form_id", form_id]
-    ]
 
-    # The groups that are subscribed to this form
-    keyValueData.extend([['group', str(group_id)] for group_id in group_ids])
+def _build_assignment_lookup(annos):
+    """
+    Builds a lookup as a dictionary of formIds to groupId lists
+    """
+    _assignments = {}
+    if annos is not None:
+        for anno in annos:
+            _form_id = None
+            _group_id = None
+            kvs = anno.getMapValue()
+            for kv in kvs:
+                if kv.name == 'formId':
+                    _form_id = kv.value
+                elif kv.name == 'groupId':
+                    _group_id = kv.value
+            _assignments.setdefault(_form_id, set()).add(long(_group_id))
+    return _assignments
 
-    # The object types that this form is intended for
-    keyValueData.extend(
-        [['obj_type', str(obj_type)] for obj_type in obj_types]
-    )
 
-    # Create and save the map annotation with the custom namespace and
-    # specified key value data
-    mapAnn = omero.gateway.MapAnnotationWrapper(conn)
-    namespace = namespace
-    mapAnn.setNs(namespace)
-    mapAnn.setValue(keyValueData)
-    mapAnn.save()
-
-    # Link the map annotation to the form master user
-    link = omero.model.ExperimenterAnnotationLinkI()
-    link.parent = omero.model.ExperimenterI(master_user_id, False)
-    link.child = mapAnn._obj
-    update = conn.getUpdateService()
-    update.saveObject(link, conn.SERVICE_OPTS)
+def _build_group_assignment_lookup(annos):
+    """
+    Builds a lookup as a dictionary of groupIds to formId lists
+    """
+    _assignments = {}
+    if annos is not None:
+        for anno in annos:
+            _form_id = None
+            _group_id = None
+            kvs = anno.getMapValue()
+            for kv in kvs:
+                if kv.name == 'formId':
+                    _form_id = kv.value
+                elif kv.name == 'groupId':
+                    _group_id = kv.value
+            _assignments.setdefault(long(_group_id), set()).add(_form_id)
+    return _assignments
 
 
 def list_forms(conn, master_user_id, group_id=None, obj_type=None):
@@ -119,13 +218,17 @@ def list_forms(conn, master_user_id, group_id=None, obj_type=None):
     List all the forms, optionally limited to those available for a single
     group, and optionally limited to those available for a single object type
     """
-    print('master_user_id', master_user_id)
+
     qs = conn.getQueryService()
 
-    namespace = 'hms.harvard.edu/omero/forms/schema/%'
+    _assignments = None
+    if group_id is not None:
+        _assignments = _build_assignment_lookup(
+            _get_assignments(conn, master_user_id, group_id)
+        )
+
     params = omero.sys.ParametersI()
     params.add('mid', omero.rtypes.wrap(long(master_user_id)))
-    params.add('ns', omero.rtypes.wrap(namespace))
 
     # Get all the annotations attached to the form master user
     q = """
@@ -135,64 +238,51 @@ def list_forms(conn, master_user_id, group_id=None, obj_type=None):
         JOIN links.child anno
         WHERE anno.class = MapAnnotation
         AND user.id = :mid
-        AND anno.ns LIKE :ns
         """
 
-    # If group_id is specified, use a different query to restrict by that
-    # group only
-    if group_id is not None:
-        params.add('gid', omero.rtypes.wrap(str(group_id)))
-        q = """
-            SELECT anno
-            FROM Experimenter user
-            JOIN user.annotationLinks links
-            JOIN links.child anno
-            JOIN anno.mapValue mapValue
-            WHERE anno.class = MapAnnotation
-            AND user.id = :mid
-            AND anno.ns LIKE :ns
-            AND mapValue.name = 'group'
-            AND mapValue.value = :gid
-            """
+    if group_id is None:
+        namespace = 'hms.harvard.edu/omero/forms/schema/%%'
+        params.add('ns', omero.rtypes.wrap(namespace))
+        q += ' AND anno.ns LIKE :ns'
+    elif _assignments is not None and len(_assignments) > 0:
+        namespace = 'hms.harvard.edu/omero/forms/schema'
+        namespaces = [namespace + '/%s' % assignment
+                      for assignment
+                      in _assignments.keys()]
+
+        params.add('nss', omero.rtypes.wrap(namespaces))
+        q += ' AND anno.ns IN (:nss)'
+    else:
+        # If there are no assignments and a group was specified there can be
+        # nothing to list
+        return
 
     rows = qs.projection(q, params, conn.SERVICE_OPTS)
     for row in rows:
 
-        _form_id = None
-        _json_schema = None
-        _ui_schema = None
-        _group_ids = []
+        _id = None
+        _owners = []
         _obj_types = []
 
         anno = row[0].val
         kvs = anno.getMapValue()
+        # TODO Can these be indexed directly instead of iterating over all
+        # the keys looking for the ones we want
         for kv in kvs:
-            if kv.name == 'form_id':
-                _form_id = kv.value
-            elif kv.name == 'json_schema':
-                _json_schema = kv.value
-            elif kv.name == 'ui_schema':
-                _ui_schema = kv.value
-            elif kv.name == 'group':
-                _group_ids.append(long(kv.value))
-            elif kv.name == 'obj_type':
+            if kv.name == 'id':
+                _id = kv.value
+            elif kv.name == 'owner':
+                _owners.append(kv.value)
+            elif kv.name == 'objType':
                 _obj_types.append(kv.value)
-
-        # TODO Throw exception
-        assert _form_id is not None
-        assert _json_schema is not None
-        assert _ui_schema is not None
 
         # TODO Ideally this would be a part of the query, but it is easier to
         # simply filter here for now
         if obj_type is None or obj_type in _obj_types:
-
+            # TODO Add form version count and possibly most recent timestamp?
             yield {
-                'form_id': _form_id,
-                'json_schema': _json_schema,
-                'ui_schema': _ui_schema,
-                'group_ids': _group_ids,
-                'obj_types': _obj_types
+                'id': _id,
+                'objTypes': _obj_types
             }
 
 
@@ -210,7 +300,6 @@ def _get_form(conn, master_user_id, form_id):
     params.add('mid', omero.rtypes.wrap(long(master_user_id)))
     params.add('ns', omero.rtypes.wrap(namespace))
 
-    # Get all the annotations attached to the form master user
     q = """
         SELECT anno
         FROM Experimenter user
@@ -232,9 +321,9 @@ def _get_form(conn, master_user_id, form_id):
     return rows[0][0].val
 
 
-def get_form(conn, master_user_id, form_id):
+def get_form_versions(conn, master_user_id, form_id):
     """
-    Get a particular form
+    Get all versions of a particular form
     """
 
     anno = _get_form(conn, master_user_id, form_id)
@@ -242,50 +331,124 @@ def get_form(conn, master_user_id, form_id):
     if anno is None:
         return None
 
-    _form_id = None
-    _json_schema = None
-    _ui_schema = None
-    _group_ids = []
-    _obj_types = []
+    _form_versions = []
 
     kvs = anno.getMapValue()
+    # TODO Can these be indexed directly instead of iterating over all
+    # the keys looking for the ones we want
+    # At the least, we should iterate in reverse order if possible as
+    # these are likely at the bottom of the list as new items are prepended
     for kv in kvs:
-        if kv.name == 'form_id':
-            _form_id = kv.value
-        elif kv.name == 'json_schema':
-            _json_schema = kv.value
-        elif kv.name == 'ui_schema':
-            _ui_schema = kv.value
-        elif kv.name == 'group':
-            _group_ids.append(long(kv.value))
-        elif kv.name == 'obj_type':
-            _obj_types.append(kv.value)
+        if kv.name not in ['id', 'owner', 'objType']:
+            _form_versions.append(json.loads(kv.value))
 
-    # TODO Throw exception
-    assert _form_id is not None
-    assert _json_schema is not None
-    assert _ui_schema is not None
-    assert _form_id == form_id
-
-    return {
-        'form_id': _form_id,
-        'json_schema': _json_schema,
-        'ui_schema': _ui_schema,
-        'group_ids': _group_ids,
-        'obj_types': _obj_types
-    }
+    return _form_versions
 
 
-def delete_form(conn, master_user_id, form_id):
+def get_form_version(conn, master_user_id, form_id, timestamp=None):
     """
-    Delete a form from the form master user.
-
-    Does NOT delete any form data annotations which might relate to this
+    Get a particular form version (defaults to the latest)
     """
 
     anno = _get_form(conn, master_user_id, form_id)
 
-    handle = conn.deleteObjects('MapAnnotation', [anno.id.val])
+    if anno is None:
+        return None
+
+    _id = None
+    _owners = []
+    _obj_types = []
+    _json_data = None
+
+    kvs = anno.getMapValue()
+    # TODO Can these be indexed directly instead of iterating over all
+    # the keys looking for the ones we want
+    # At the least, we should iterate in reverse order if possible as
+    # these are likely at the bottom of the list as new items are prepended
+    for kv in kvs:
+        if kv.name == 'id':
+            _id = kv.value
+        elif kv.name == 'owner':
+            _owners.append(long(kv.value))
+        elif kv.name == 'objType':
+            _obj_types.append(kv.value)
+        elif timestamp is not None and kv.name == timestamp:
+            _json_data = kv.value
+        elif timestamp is None and _json_data is None:
+            _json_data = kv.value
+
+    d = json.loads(_json_data)
+
+    return {
+        'id': _id,
+        'schema': d['schema'],
+        'uiSchema': d['uiSchema'],
+        'author': d['author'],
+        'timestamp': d['timestamp'],
+        'message': d['message'],
+        'objTypes': _obj_types,
+        'owners': _owners
+    }
+
+
+def get_group_assignments(conn, master_user_id, group_ids):
+    """
+    Get all the assignments
+    Returns a dictionary. group ids -> [form ids]
+    """
+
+    assignments = _build_group_assignment_lookup(
+        _get_assignments(conn, master_user_id)
+    )
+
+    allowed_assignments = {}
+    for group_id in group_ids:
+        if group_id in assignments:
+            allowed_assignments[group_id] = list(assignments[group_id])
+
+    return allowed_assignments
+
+
+def get_form_assignments(conn, master_user_id, form_id):
+    """
+    Get all the assignments
+    Returns a list of group_ids
+    """
+
+    annos = _get_assignments(conn, master_user_id, form_id=form_id)
+    group_ids = set()
+    if annos is not None:
+        for anno in annos:
+            kvs = anno.getMapValue()
+            for kv in kvs:
+                if kv.name == 'groupId':
+                    _group_id = kv.value
+                    group_ids.add(long(kv.value))
+    return list(group_ids)
+
+
+def delete_form(conn, master_user_id, form_id):
+    """
+    Delete a form (and all form versions of that form) from the form master
+    user. Also deletes all assignments of that form.
+
+    Does NOT delete any form data annotations which might relate to this
+    """
+
+    form_anno = _get_form(conn, master_user_id, form_id)
+    assignments_anno = _get_assignments(conn, master_user_id,
+                                        form_id=form_id)
+
+    annos = []
+    if form_anno is not None:
+        annos.append(form_anno.id.val)
+    if assignments_anno is not None:
+        annos.extend([long(aa.id.val) for aa in assignments_anno])
+
+    if len(annos) == 0:
+        return
+
+    handle = conn.deleteObjects('MapAnnotation', annos)
     cb = omero.callbacks.CmdCallbackI(conn.c, handle)
 
     while not cb.block(500):
@@ -298,36 +461,95 @@ def delete_form(conn, master_user_id, form_id):
     cb.close(True)
 
 
-def _make_form_data_json(form_id, obj_type, obj_id, data, changed_by,
-                         changed_at):
+def assign_form(conn, master_user_id, form_id, add_group_ids=[],
+                remove_group_ids=[]):
     """
-    Build a json string containing the submitted form data, form_id, author
-    of the changes and time at which the change was made
-    """
-
-    return json.dumps({
-        'formId': form_id,
-        'formData': data,
-        'changedBy': changed_by,
-        'changedAt': changed_at.isoformat()
-    })
-
-
-def _unmake_form_data_json(json_data):
-    """
-    Deconstruct the json string containing the submitted form data, form_id,
-    author of the changes and time at which the change was made
+    Assign a form to some groups
     """
 
-    loaded_data = json.loads(json_data)
+    # See if any of the requested assignments already exist
+    # Just get them all and compare in python to avoid multiple round trips
+    _assignments = get_form_assignments(conn, master_user_id, form_id)
 
-    return {
-        'form_id': loaded_data['formId'],
-        'form_data': loaded_data['formData'],
-        'changed_by': loaded_data['changedBy'],
-        'changed_at': datetime.strptime(loaded_data['changedAt'],
-                                        '%Y-%m-%dT%H:%M:%S.%f')
-    }
+    new_add_group_ids = [
+        group_id
+        for group_id
+        in add_group_ids
+        if group_id not in _assignments
+    ]
+
+    new_remove_group_ids = [
+        group_id
+        for group_id
+        in remove_group_ids
+        if group_id in _assignments
+    ]
+
+    if len(new_add_group_ids) > 0:
+
+        links = []
+        for group_id in new_add_group_ids:
+            namespace = 'hms.harvard.edu/omero/forms/assignments/%s/%d' % (
+                form_id, group_id)
+            map_ann = omero.gateway.MapAnnotationWrapper(conn)
+            map_ann.setNs(namespace)
+            # TODO Is it possible to save multiple annotations at once?
+            map_ann.setValue(
+                [
+                    ['formId', form_id],
+                    ['groupId', str(group_id)]
+                ]
+            )
+            map_ann.save()
+
+            link = omero.model.ExperimenterAnnotationLinkI()
+            link.parent = omero.model.ExperimenterI(master_user_id, False)
+            link.child = map_ann._obj
+            links.append(link)
+
+        update = conn.getUpdateService()
+        update.saveArray(links, conn.SERVICE_OPTS)
+
+    if len(new_remove_group_ids) > 0:
+
+        namespace = 'hms.harvard.edu/omero/forms/assignments/%s' % form_id
+        namespaces = [
+            '%s/%d' % (namespace, group_id)
+            for group_id
+            in new_remove_group_ids
+        ]
+
+        params = omero.sys.ParametersI()
+        params.add('mid', omero.rtypes.wrap(long(master_user_id)))
+        params.add('nss', omero.rtypes.wrap(namespaces))
+
+        qs = conn.getQueryService()
+        q = """
+            SELECT anno
+            FROM Experimenter user
+            JOIN user.annotationLinks links
+            JOIN links.child anno
+            WHERE anno.class = MapAnnotation
+            AND user.id = :mid
+            AND anno.ns IN (:nss)
+            """
+
+        rows = qs.projection(q, params, conn.SERVICE_OPTS)
+        annos = [row[0].val for row in rows]
+
+        if len(annos) > 0:
+            handle = conn.deleteObjects('MapAnnotation',
+                                        [anno.id.val for anno in annos])
+            cb = omero.callbacks.CmdCallbackI(conn.c, handle)
+
+            while not cb.block(500):
+                pass
+            err = isinstance(cb.getResponse(), omero.cmd.ERR)
+            if err:
+                # TODO Throw exception
+                pass
+                # print cb.getResponse()
+            cb.close(True)
 
 
 def _get_form_data(conn, master_user_id, form_id, obj_type, obj_id):
@@ -338,7 +560,7 @@ def _get_form_data(conn, master_user_id, form_id, obj_type, obj_id):
     Returns a MapAnnotationI object or None
     """
 
-    namespace = 'hms.harvard.edu/omero/forms/data/%s%s/%s' % (
+    namespace = 'hms.harvard.edu/omero/forms/data/%s/%s/%s' % (
         obj_type,
         obj_id,
         form_id
@@ -360,9 +582,6 @@ def _get_form_data(conn, master_user_id, form_id, obj_type, obj_id):
         """
 
     rows = qs.projection(q, params, conn.SERVICE_OPTS)
-
-    # TODO Throw Exception
-    assert len(rows) <= 1
 
     if len(rows) == 0:
         return None
@@ -436,15 +655,15 @@ def list_form_data_orphans(conn, master_user_id):
     for obj, form_ids in obj_form_ids.iteritems():
         for form_id in form_ids:
             yield {
-                'form_id': form_id,
-                'obj_type': obj[0],
-                'obj_id': obj[1]
+                'formId': form_id,
+                'objType': obj[0],
+                'objId': obj[1]
             }
     return
 
 
-def add_form_data(conn, master_user_id, form_id, obj_type, obj_id, data,
-                  changed_by, changed_at):
+def add_form_data(conn, master_user_id, form_id, form_timestamp, message,
+                  obj_type, obj_id, data, changed_by, changed_at):
     """
     Add form data and associated metadata to the form master user
     """
@@ -452,14 +671,20 @@ def add_form_data(conn, master_user_id, form_id, obj_type, obj_id, data,
     # TODO Check and assert that the object exists
     # qs = conn.getQueryService()
 
-    namespace = 'hms.harvard.edu/omero/forms/data/%s%s/%s' % (
+    namespace = 'hms.harvard.edu/omero/forms/data/%s/%s/%s' % (
         obj_type,
         obj_id,
         form_id
     )
 
-    json_data = _make_form_data_json(form_id, obj_type, obj_id, data,
-                                     changed_by, changed_at)
+    json_data = json.dumps({
+        'formId': form_id,
+        'formTimestamp': form_timestamp,
+        'formData': data,
+        'changedBy': changed_by,
+        'changedAt': changed_at.isoformat(),
+        'message': message
+    })
 
     # If the appropriate annotation already exists, update it
     anno = _get_form_data(conn, master_user_id, form_id, obj_type, obj_id)
@@ -501,7 +726,17 @@ def get_form_data_history(conn, master_user_id, form_id, obj_type, obj_id):
     if anno is not None:
         kvs = anno.getMapValue()
         for kv in kvs:
-            yield _unmake_form_data_json(kv.value)
+            loaded_data = json.loads(kv.value)
+            yield {
+                'formId': loaded_data['formId'],
+                'formTimestamp': loaded_data['formTimestamp'],
+                'formData': loaded_data['formData'],
+                'changedBy': loaded_data['changedBy'],
+                'changedAt': datetime.strptime(loaded_data['changedAt'],
+                                               '%Y-%m-%dT%H:%M:%S.%f'),
+                'message': loaded_data['message']
+            }
+
     else:
         return
 
@@ -586,6 +821,10 @@ def _get_form_kvdata(conn, form_id, obj_type, obj_id):
     params.add('ns', omero.rtypes.wrap(namespace))
 
     qs = conn.getQueryService()
+
+    service_opts = deepcopy(conn.SERVICE_OPTS)
+    service_opts.setOmeroGroup(-1)
+
     q = """
         SELECT anno
         FROM %s obj
@@ -596,10 +835,10 @@ def _get_form_kvdata(conn, form_id, obj_type, obj_id):
         AND anno.ns = :ns
         """ % obj_type
 
-    rows = qs.projection(q, params, conn.SERVICE_OPTS)
+    rows = qs.projection(q, params, service_opts)
 
     # TODO Throw Exception
-    assert len(rows) <= 1
+    # assert len(rows) <= 1
 
     if len(rows) == 0:
         return None
@@ -608,7 +847,6 @@ def _get_form_kvdata(conn, form_id, obj_type, obj_id):
 
 
 def _navigate_form_data_tree(key, data):
-    print type(data)
     if isinstance(data, dict):
         for k, v in data.iteritems():
             compound_key = key or ''
@@ -624,7 +862,7 @@ def _navigate_form_data_tree(key, data):
         yield [str(key), str(data)]
 
 
-def add_form_data_to_obj(conn, form_id, obj_type, obj_id, data):
+def add_form_data_to_obj(conn, user_conn, form_id, obj_type, obj_id, data):
     """
     Get the key-values from the data and attach this to the object
     for conveniance
@@ -635,39 +873,31 @@ def add_form_data_to_obj(conn, form_id, obj_type, obj_id, data):
     # Extract key values from form data
     kvs = _navigate_form_data_tree(None, json.loads(data))
 
-    # If the appropriate annotation already exists, update it
-    anno = _get_form_kvdata(conn, form_id, obj_type, obj_id)
-    if anno is not None:
+    # If the appropriate annotation already exists, delete it
+    delete_form_kvdata(conn, form_id, obj_type, obj_id)
 
-        anno.setMapValue([omero.model.NamedValue(k, v) for k, v in kvs])
+    # Create a new one
+    map_ann = omero.gateway.MapAnnotationWrapper(user_conn)
+    map_ann.setNs(namespace)
+    map_ann.setValue(kvs)
+    map_ann.save()
 
-        us = conn.getUpdateService()
-        us.saveObject(anno, conn.SERVICE_OPTS)
+    if obj_type == 'Project':
+        link = omero.model.ProjectAnnotationLinkI()
+        link.parent = omero.model.ProjectI(obj_id, False)
+    elif obj_type == 'Dataset':
+        link = omero.model.DatasetAnnotationLinkI()
+        link.parent = omero.model.DatasetI(obj_id, False)
+    elif obj_type == 'Screen':
+        link = omero.model.ScreenAnnotationLinkI()
+        link.parent = omero.model.ScreenI(obj_id, False)
+    elif obj_type == 'Plate':
+        link = omero.model.PlateAnnotationLinkI()
+        link.parent = omero.model.PlateI(obj_id, False)
+    link.child = map_ann._obj
 
-    # If it does not already exist, create a new one
-    else:
-
-        mapAnn = omero.gateway.MapAnnotationWrapper(conn)
-        mapAnn.setNs(namespace)
-        mapAnn.setValue(kvs)
-        mapAnn.save()
-
-        if obj_type == 'Project':
-            link = omero.model.ProjectAnnotationLinkI()
-            link.parent = omero.model.ProjectI(obj_id, False)
-        elif obj_type == 'Dataset':
-            link = omero.model.DatasetAnnotationLinkI()
-            link.parent = omero.model.DatasetI(obj_id, False)
-        elif obj_type == 'Screen':
-            link = omero.model.ScreenAnnotationLinkI()
-            link.parent = omero.model.ScreenI(obj_id, False)
-        elif obj_type == 'Plate':
-            link = omero.model.PlateAnnotationLinkI()
-            link.parent = omero.model.PlateI(obj_id, False)
-        link.child = mapAnn._obj
-
-        update = conn.getUpdateService()
-        update.saveObject(link, conn.SERVICE_OPTS)
+    update = user_conn.getUpdateService()
+    update.saveObject(link, user_conn.SERVICE_OPTS)
 
 
 def delete_form_kvdata(conn, form_id, obj_type, obj_id):
@@ -679,7 +909,6 @@ def delete_form_kvdata(conn, form_id, obj_type, obj_id):
     anno = _get_form_kvdata(conn, form_id, obj_type, obj_id)
 
     if anno is None:
-        # TODO Throw exception or something to indicate nothing to delete?
         return
 
     handle = conn.deleteObjects('MapAnnotation', [anno.id.val])
@@ -718,12 +947,12 @@ def _marshal_group(conn, row):
 
 def get_managed_groups(conn):
     """
-    Get list list of groups that the user can administer
+    List of groups that the user can administer
     All groups for admins
     For other users, only groups of which they are the owner
-
-    Returns a list of ExperimenterGroupI objects
     """
+
+    # TODO Add special case for admin
 
     user = conn.getUser()
     groups = []
@@ -734,17 +963,45 @@ def get_managed_groups(conn):
 
     qs = conn.getQueryService()
     q = """
-        select grp.id,
+        SELECT grp.id,
                grp.name,
                grp.details.permissions
-        from ExperimenterGroup grp
-        join grp.groupExperimenterMap grexp
-        where grp.name != 'user'
-        and grexp.child.id = :mid
-        and grexp.owner = false
-        order by lower(grp.name)
+        FROM ExperimenterGroup grp
+        JOIN grp.groupExperimenterMap grexp
+        WHERE grp.name != 'user'
+        AND grexp.child.id = :mid
+        AND grexp.owner = false
+        ORDER BY lower(grp.name)
         """
 
     for e in qs.projection(q, params, service_opts):
         groups.append(_marshal_group(conn, e[0:3]))
     return groups
+
+
+def get_users(conn, user_ids):
+    """
+    Lookup user IDs and return usernames
+    """
+
+    params = omero.sys.ParametersI()
+    service_opts = deepcopy(conn.SERVICE_OPTS)
+    service_opts.setOmeroGroup(-1)
+    params.add('uids', wrap(omero.rtypes.wrap(user_ids)))
+
+    qs = conn.getQueryService()
+    q = """
+        SELECT user.id,
+               user.omeName
+        FROM Experimenter user
+        WHERE user.id IN (:uids)
+        ORDER BY lower(user.omeName)
+        """
+
+    rows = qs.projection(q, params, service_opts)
+
+    for row in rows:
+        yield {
+            'id': row[0].val,
+            'name': row[1].val
+        }

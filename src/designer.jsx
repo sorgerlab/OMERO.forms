@@ -2,7 +2,6 @@ import React from "react";
 import { render } from "react-dom";
 import Editor from './designer-editor';
 import Assigner from './designer-assigner';
-import Viewer from './designer-viewer';
 // import './bootstrap.css';
 import './designer-styles.css';
 import "codemirror/lib/codemirror.css";
@@ -31,7 +30,7 @@ class App extends React.Component {
     const { urls } = this.props;
 
     const request = new Request(
-      urls.listForms,
+      `${ urls.base }list_forms/`,
       {
         credentials: 'same-origin'
       }
@@ -42,22 +41,11 @@ class App extends React.Component {
     ).then(
       response => response.json()
     ).then(
-      jsonData => {
+      data => {
+
         const forms = {};
-        jsonData.forms.forEach(form => {
-
-          const formData = form.hasOwnProperty('formData')
-                         ? JSON.parse(form.formData)
-                         : undefined;
-
-          forms[form.formId] = {
-            formId: form.formId,
-            jsonSchema: JSON.parse(form.jsonSchema),
-            uiSchema: JSON.parse(form.uiSchema),
-            formData: formData,
-            objTypes: form.objTypes,
-            groupIds: form.groupIds
-          }
+        data.forms.forEach(form => {
+          forms[form.id] = form;
         });
 
         this.setState({
@@ -71,7 +59,7 @@ class App extends React.Component {
     const { urls } = this.props;
 
     const request = new Request(
-      urls.managedGroups,
+      `${ urls.base }get_managed_groups/`,
       {
         credentials: 'same-origin'
       }
@@ -88,18 +76,10 @@ class App extends React.Component {
     );
   }
 
-  updateForm(formId, schema, uiSchema, formTypes) {
+  updateForm(formData) {
     const { forms } = this.state;
-    const oldForm = forms[formId];
     const f = { ...forms };
-    f[formId] = {
-      formId: formId,
-      jsonSchema: schema,
-      uiSchema: uiSchema,
-      objTypes: formTypes,
-      groupIds: oldForm.groupIds
-    };
-
+    f[formData.id] = formData;
     this.setState({
       forms: f
     });
@@ -131,7 +111,7 @@ class App extends React.Component {
   renderNav() {
     const { mode } = this.state;
 
-    const items = ['Editor', 'Assigner', 'Viewer'].map(m => {
+    const items = ['Editor', 'Assigner'].map(m => {
       return (
         <li className={ m === mode ? 'active' : '' }>
           <a href='#' onClick={ () => this.selectMode(m) }>{ m }</a>
@@ -167,13 +147,6 @@ class App extends React.Component {
           updateForm={ this.updateFormAssignment }
         />
       )
-    } else if (mode === 'Viewer') {
-      return (
-        <Viewer
-          forms={ forms }
-          urls={ urls }
-        />
-      );
     }
 
   }

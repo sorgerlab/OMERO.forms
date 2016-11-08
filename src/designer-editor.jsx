@@ -166,10 +166,11 @@ export default class Editor extends React.Component {
 
     const { schema, uiSchema, formData, validate } = defaultData;
     this.state = {
-      form: undefined,
+      formId: '',
       schema,
       uiSchema,
       formData,
+      message: '',
       validate,
       editor: 'default',
       liveValidate: true,
@@ -182,6 +183,8 @@ export default class Editor extends React.Component {
     this.saveForm = this.saveForm.bind(this);
     this.toggleNameModal = this.toggleNameModal.bind(this);
     this.changeFormName = this.changeFormName.bind(this);
+    this.updateName = this.updateName.bind(this);
+    this.updateMessage = this.updateMessage.bind(this);
 
   }
 
@@ -189,30 +192,41 @@ export default class Editor extends React.Component {
     return shouldRender(this, nextProps, nextState);
   }
 
-  selectForm(selection) {
-    const { forms } = this.props;
+  loadForm(formId) {
+    const { urls } = this.props;
+    const formRequest = new Request(
+      `${ urls.base }get_form/${ formId }/`,
+      {
+        credentials: 'same-origin'
+      }
+    );
 
-    if (selection && selection.value) {
-      const form = forms[selection.value];
-      if (form) {
+    fetch(
+      formRequest
+    ).then(
+      response => response.json()
+    ).then(
+      jsonData => {
+        const form = jsonData.form;
         this.setState({
-          form: form.formId,
-          schema: form.jsonSchema,
-          uiSchema: form.uiSchema,
+          timestamp: form.timestamp,
+          schema: JSON.parse(form.schema),
+          uiSchema: JSON.parse(form.uiSchema),
           formData: {},
           formTypes: form.objTypes
         });
       }
-    } else {
-      const { schema, uiSchema, formData, validate } = defaultData;
+    );
+  }
+
+  selectForm(selection) {
+    const { forms } = this.props;
+    if (selection && selection.value) {
       this.setState({
-        form: undefined,
-        schema,
-        uiSchema,
-        formData,
-        validate,
-        formTypes: []
+        formId: selection.value,
+        message: ''
       });
+      this.loadForm(selection.value);
     }
   }
 
@@ -223,25 +237,34 @@ export default class Editor extends React.Component {
   }
 
   saveForm() {
-    const { form, schema, uiSchema, formTypes } = this.state;
-    const { forms, updateForm } = this.props;
+    const { formId, schema, uiSchema, formTypes, message } = this.state;
+    const { forms, updateForm, urls } = this.props;
+
     const request = new Request(
-      this.props.urls.addForm,
+      `${urls.base}save_form/`,
       {
         method: 'POST',
         body: JSON.stringify({
-          formId: form,
-          jsonSchema: JSON.stringify(schema),
+          id: formId,
+          schema: JSON.stringify(schema),
           uiSchema: JSON.stringify(uiSchema),
+          message,
           objTypes: formTypes
         }),
         credentials: 'same-origin'
       }
     );
 
-    fetch(request).then(() => {
-      updateForm(form, schema, uiSchema, formTypes);
-    });
+    fetch(request).then(
+      response => response.json()
+    ).then(
+      jsonData => {
+        updateForm(jsonData.form)
+        this.setState({
+          message: ''
+        });
+      }
+    );
 
   }
 
@@ -269,16 +292,29 @@ export default class Editor extends React.Component {
 
   changeFormName(name) {
     this.setState({
-      form: name
+      formId: name
+    });
+  }
+
+  updateName(e) {
+    this.setState({
+      formId: e.target.value
+    });
+  }
+
+  updateMessage(e) {
+    this.setState({
+      message: e.target.value
     });
   }
 
   render() {
     const {
-      form,
+      formId,
       schema,
       uiSchema,
       formData,
+      message,
       liveValidate,
       validate,
       editor,
@@ -286,9 +322,9 @@ export default class Editor extends React.Component {
       nameEdit
     } = this.state;
     const { forms } = this.props;
-    const options = Object.keys(forms).map(key => {
+    const options = Object.keys(forms).sort().map(key => {
       return {
-        value: forms[key].formId,
+        value: key,
         label: key
       };
     });
@@ -303,51 +339,100 @@ export default class Editor extends React.Component {
 
         <div className='col-sm-7'>
 
-          {/* TODO Extract this into component */}
           <div className='panel panel-default'>
             <div className='panel-heading'>
-                <Select
-                  name='form-chooser'
-                  placeholder='Load existing form...'
-                  options={ options }
-                  value={ form }
-                  onChange={ this.selectForm }
-                />
-            </div>
-            <div className='panel-body'>
               <div className='row'>
-                <div className='col-sm-5'>
-                  <Select
-                    name='type-chooser'
-                    placeholder='Select applicable types...'
-                    multi={ true }
-                    options={ typeOptions }
-                    value={ formTypes }
-                    onChange={ this.selectTypes }
+                <div className='col-sm-4'>
+                  <input
+                    type='text'
+                    className='form-control'
+                    placeholder='Form name...'
+                    value={ formId }
+                    onChange={ this.updateName }
                   />
                 </div>
+
+                <div className='col-sm-2'>
+                  <button
+                    type='button'
+                    className='btn btn-info'
+                    onClick={ this.saveForm }
+                    disabled={ !formId }
+                  >Save</button>
+                </div>
+
+                <div className='col-sm-4 col-sm-offset-2'>
+                  <Select
+                    name='form-chooser'
+                    placeholder='Load existing form...'
+                    options={ options }
+                    onChange={ this.selectForm }
+                  />
+                </div>
+
+              </div>
+
+              <div className='row'>
+
                 <div className='col-sm-2'>
                   <Checkbox onChange={ this.setLiveValidate } checked={ liveValidate }>Live Validation</Checkbox>
                 </div>
-                <div className='col-sm-5'>
-                  <button type='button' className='btn btn-info pull-right' onClick={ this.saveForm }>Save Form</button>
+
+              </div>
+
+            </div>
+            <div className='panel-body'>
+
+              <div className='row'>
+                <div className='col-sm-12'>
+                  <div className='form-group'>
+                    <label for='objTypes'>Object Types</label>
+                    <Select
+                      name='type-chooser'
+                      placeholder='Select applicable types...'
+                      multi={ true }
+                      options={ typeOptions }
+                      value={ formTypes }
+                      onChange={ this.selectTypes }
+                      id='objTypes'
+                    />
+                  </div>
                 </div>
+              </div>
+
+              <div className='row'>
+                <div className='col-sm-12'>
+                  <div className='form-group'>
+                    <label for='message'>Change Message</label>
+                      <textarea
+                        className='form-control'
+                        rows='3'
+                        placeholder='Change message...'
+                        value={ message }
+                        onChange={ this.updateMessage }
+                        id='message'
+                      />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <CodeEditor title='JSONSchema' theme={editor} code={toJson(schema)}
+              onChange={this.onSchemaEdited} />
+
+            <div className='row'>
+              <div className='col-sm-6'>
+                <CodeEditor title='UISchema' theme={editor} code={toJson(uiSchema)}
+                  onChange={this.onUISchemaEdited} />
+              </div>
+              <div className='col-sm-6'>
+                <CodeEditor title='formData' theme={editor} code={toJson(formData)}
+                  onChange={this.onFormDataEdited} />
               </div>
             </div>
           </div>
 
-          <CodeEditor title='JSONSchema' theme={editor} code={toJson(schema)}
-            onChange={this.onSchemaEdited} />
-          <div className='row'>
-            <div className='col-sm-6'>
-              <CodeEditor title='UISchema' theme={editor} code={toJson(uiSchema)}
-                onChange={this.onUISchemaEdited} />
-            </div>
-            <div className='col-sm-6'>
-              <CodeEditor title='formData' theme={editor} code={toJson(formData)}
-                onChange={this.onFormDataEdited} />
-            </div>
-          </div>
         </div>
 
         <div className='col-sm-5'>
@@ -362,7 +447,7 @@ export default class Editor extends React.Component {
         </div>
 
         <NameModal
-          name={ form }
+          name={ formId }
           show={ nameEdit }
           toggle={ this.toggleNameModal }
           onChange={ this.changeFormName }
