@@ -313,11 +313,14 @@ def save_form(request, conn=None, su_conn=None, form_master=None, **kwargs):
             'Adding or updating a form requires a formId to be specified'
         )
 
+    user_id = conn.user.getId()
+    admin = conn.isAdmin()
+
     # Ensure that if this form already exists, the user has permission to
     # overwrite it (i.e. is an owner)
     existing_form = utils.get_form_version(su_conn, form_master, form_id)
     if existing_form is not None:
-        if conn.user.getId() not in existing_form['owners']:
+        if user_id not in existing_form['owners'] and admin is not True:
             return HttpResponseUnauthorized(
                 'Updating a form requires ownership'
             )
@@ -328,8 +331,8 @@ def save_form(request, conn=None, su_conn=None, form_master=None, **kwargs):
             return HttpResponseBadRequest('%s not a valid obj_type' % obj_type)
 
     form_version = utils.add_form_version(
-        su_conn, form_master, form_id, schema, ui_schema,
-        conn.user.getId(), datetime.now(), message, obj_types
+        su_conn, form_master, form_id, schema, ui_schema, user_id,
+        datetime.now(), message, obj_types
     )
 
     return HttpJsonResponse({

@@ -952,14 +952,9 @@ def get_managed_groups(conn):
     For other users, only groups of which they are the owner
     """
 
-    # TODO Add special case for admin
-
-    user = conn.getUser()
-    groups = []
-    params = omero.sys.ParametersI()
     service_opts = deepcopy(conn.SERVICE_OPTS)
     service_opts.setOmeroGroup(-1)
-    params.add('mid', rlong(user.getId()))
+    params = omero.sys.ParametersI()
 
     qs = conn.getQueryService()
     q = """
@@ -967,13 +962,20 @@ def get_managed_groups(conn):
                grp.name,
                grp.details.permissions
         FROM ExperimenterGroup grp
-        JOIN grp.groupExperimenterMap grexp
-        WHERE grp.name != 'user'
-        AND grexp.child.id = :mid
-        AND grexp.owner = false
-        ORDER BY lower(grp.name)
         """
 
+    if conn.isAdmin() is not True:
+        user = conn.getUser()
+        params.add('mid', rlong(user.getId()))
+        q += """
+                JOIN grp.groupExperimenterMap grexp
+                WHERE grp.name != 'user'
+                AND grexp.child.id = :mid
+                AND grexp.owner = false
+                ORDER BY lower(grp.name)
+             """
+
+    groups = []
     for e in qs.projection(q, params, service_opts):
         groups.append(_marshal_group(conn, e[0:3]))
     return groups
