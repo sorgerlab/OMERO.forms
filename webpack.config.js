@@ -5,9 +5,10 @@ var path = require('path');
 
 module.exports = {
   entry: {
-    'bundle.min': ['./src/main.jsx'],
-    'bundle': ['./src/main.jsx'],
-    'designer': ['./src/designer.jsx'],
+    'bundle.min': ['whatwg-fetch', './src/main.jsx'],
+    'bundle': ['whatwg-fetch', './src/main.jsx'],
+    'designer': ['whatwg-fetch', './src/designer.jsx'],
+    'designer.min': ['whatwg-fetch', './src/designer.jsx'],
   },
   output: {
     path: './static/forms/js',
