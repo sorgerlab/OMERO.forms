@@ -275,8 +275,7 @@ def get_form_data_history(request, form_id, obj_type, obj_id, conn=None,
         obj_id
     ))
 
-    form_versions = utils.get_form_versions(su_conn, conn, form_master,
-                                            form_id)
+    form_versions = utils.get_form_versions(su_conn, form_master, form_id)
 
     return HttpJsonResponse({
         'data': data,
