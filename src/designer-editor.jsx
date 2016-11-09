@@ -175,7 +175,10 @@ export default class Editor extends React.Component {
       editor: 'default',
       liveValidate: true,
       formTypes: [],
-      nameEdit: false
+      nameEdit: false,
+      previousSchema: undefined,
+      previousUISchema: undefined,
+      previousFormTypes: undefined
     };
 
     this.selectForm = this.selectForm.bind(this);
@@ -208,12 +211,17 @@ export default class Editor extends React.Component {
     ).then(
       jsonData => {
         const form = jsonData.form;
+        const schema = JSON.parse(form.schema);
+        const uiSchema = JSON.parse(form.uiSchema);
         this.setState({
           timestamp: form.timestamp,
-          schema: JSON.parse(form.schema),
-          uiSchema: JSON.parse(form.uiSchema),
+          schema,
+          uiSchema,
           formData: {},
-          formTypes: form.objTypes
+          formTypes: form.objTypes,
+          previousSchema: schema,
+          previousUISchema: uiSchema,
+          previousFormTypes: form.objTypes
         });
       }
     );
@@ -261,7 +269,10 @@ export default class Editor extends React.Component {
       jsonData => {
         updateForm(jsonData.form)
         this.setState({
-          message: ''
+          message: '',
+          previousSchema: schema,
+          previousUISchema: uiSchema,
+          previousFormTypes: formTypes
         });
       }
     );
@@ -319,7 +330,10 @@ export default class Editor extends React.Component {
       validate,
       editor,
       formTypes,
-      nameEdit
+      nameEdit,
+      previousSchema,
+      previousUISchema,
+      previousFormTypes
     } = this.state;
     const { forms } = this.props;
     const options = Object.keys(forms).sort().map(key => {
@@ -333,6 +347,8 @@ export default class Editor extends React.Component {
       value: t,
       label: t
     }));
+
+    const unsaved = schema !== previousSchema || uiSchema !== previousUISchema || formTypes !== previousFormTypes;
 
     return (
       <div>
@@ -357,8 +373,14 @@ export default class Editor extends React.Component {
                     type='button'
                     className='btn btn-info'
                     onClick={ this.saveForm }
-                    disabled={ !formId }
-                  >Save</button>
+                    disabled={ !formId || !unsaved }
+                  >
+                  Save
+                  { unsaved && <span class="badge">*</span> }
+                  </button>
+
+
+
                 </div>
 
                 <div className='col-sm-4 col-sm-offset-2'>
@@ -407,7 +429,7 @@ export default class Editor extends React.Component {
                       <textarea
                         className='form-control'
                         rows='3'
-                        placeholder='Change message...'
+                        placeholder='Enter a summary of the changes made...'
                         value={ message }
                         onChange={ this.updateMessage }
                         id='message'

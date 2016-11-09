@@ -185,7 +185,7 @@ export default class Forms extends React.Component {
                 <textarea
                   className='form-control'
                   rows='3'
-                  placeholder='Change message...'
+                  placeholder='Enter a summary of the changes made...'
                   value={ message }
                   onChange={ this.updateMessage }
                   id='message'
