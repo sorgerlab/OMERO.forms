@@ -345,7 +345,7 @@ def get_form_versions(conn, master_user_id, form_id):
     return _form_versions
 
 
-def get_form_version(conn, master_user_id, form_id, timestamp=None):
+def get_form_version(conn, user_conn, master_user_id, form_id, timestamp=None):
     """
     Get a particular form version (defaults to the latest)
     """
@@ -387,7 +387,8 @@ def get_form_version(conn, master_user_id, form_id, timestamp=None):
         'timestamp': d['timestamp'],
         'message': d['message'],
         'objTypes': _obj_types,
-        'owners': _owners
+        'owners': _owners,
+        'editable': user_conn.isAdmin() or user_conn.getUserId() in _owners
     }
 
 
@@ -422,7 +423,6 @@ def get_form_assignments(conn, master_user_id, form_id):
             kvs = anno.getMapValue()
             for kv in kvs:
                 if kv.name == 'groupId':
-                    _group_id = kv.value
                     group_ids.add(long(kv.value))
     return list(group_ids)
 

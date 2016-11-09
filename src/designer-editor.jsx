@@ -175,7 +175,9 @@ export default class Editor extends React.Component {
       editor: 'default',
       liveValidate: true,
       formTypes: [],
+      editable: true,
       nameEdit: false,
+      previousFormId: undefined,
       previousSchema: undefined,
       previousUISchema: undefined,
       previousFormTypes: undefined
@@ -219,6 +221,8 @@ export default class Editor extends React.Component {
           uiSchema,
           formData: {},
           formTypes: form.objTypes,
+          editable: form.editable,
+          previousFormId: form.id,
           previousSchema: schema,
           previousUISchema: uiSchema,
           previousFormTypes: form.objTypes
@@ -308,9 +312,38 @@ export default class Editor extends React.Component {
   }
 
   updateName(e) {
+    const { urls } = this.props;
+    const name = e.target.value;
     this.setState({
-      formId: e.target.value
+      formId: name
     });
+
+    if (!name || name.length === 0) {
+      this.setState({
+        editable: true
+      });
+      return;
+    }
+
+    const request = new Request(
+      `${urls.base}get_formid_editable/${ name }`,
+      {
+        credentials: 'same-origin'
+      }
+    );
+
+    fetch(
+      request
+    ).then(
+      response => response.json()
+    ).then(
+      jsonData => {
+        this.setState({
+          editable: jsonData.editable
+        });
+      }
+    );
+
   }
 
   updateMessage(e) {
@@ -330,6 +363,7 @@ export default class Editor extends React.Component {
       validate,
       editor,
       formTypes,
+      editable,
       nameEdit,
       previousSchema,
       previousUISchema,
@@ -349,6 +383,21 @@ export default class Editor extends React.Component {
     }));
 
     const unsaved = schema !== previousSchema || uiSchema !== previousUISchema || formTypes !== previousFormTypes;
+
+    let editStatus = (
+      <div className='alert alert-success form-small-alert'><strong>Valid form name</strong></div>
+    );
+
+    if (!formId || formId.length === 0) {
+      editStatus = (
+        <div className='alert alert-danger form-small-alert'><strong>Form must have a name</strong></div>
+      );
+    } else if (!editable) {
+      editStatus = (
+        <div className='alert alert-danger form-small-alert'><strong>Form name is owned by someone else</strong></div>
+      );
+    }
+
 
     return (
       <div>
@@ -373,14 +422,11 @@ export default class Editor extends React.Component {
                     type='button'
                     className='btn btn-info'
                     onClick={ this.saveForm }
-                    disabled={ !formId || !unsaved }
+                    disabled={ !formId || !unsaved || !editable }
                   >
-                  Save
-                  { unsaved && <span class="badge">*</span> }
+                    Save
+                    { unsaved && <span class="badge">*</span> }
                   </button>
-
-
-
                 </div>
 
                 <div className='col-sm-4 col-sm-offset-2'>
@@ -395,6 +441,10 @@ export default class Editor extends React.Component {
               </div>
 
               <div className='row'>
+
+                <div className='col-sm-10'>
+                  { editStatus }
+                </div>
 
                 <div className='col-sm-2'>
                   <Checkbox onChange={ this.setLiveValidate } checked={ liveValidate }>Live Validation</Checkbox>

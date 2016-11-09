@@ -1,3 +1,10 @@
 .Select-menu-outer {
   z-index: 999 !important;
 }
+
+.form-small-alert {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  margin-bottom: 0px;
+  margin-top: 5px;
+}

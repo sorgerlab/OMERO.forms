@@ -139,13 +139,13 @@ def list_applicable_forms(request, obj_type=None, conn=None, su_conn=None,
 
 @login_required(setGroupContext=True)
 @with_su
-def get_form(request, form_id, su_conn=None, form_master=None,
+def get_form(request, form_id, conn=None, su_conn=None, form_master=None,
              **kwargs):
 
     if request.method != 'GET':
         return HttpResponseNotAllowed('Methods allowed: GET')
 
-    form = utils.get_form_version(su_conn, form_master, form_id)
+    form = utils.get_form_version(su_conn, conn, form_master, form_id)
 
     if form is None:
         raise Http404('Form: %s, not found' % form_id)
@@ -275,12 +275,35 @@ def get_form_data_history(request, form_id, obj_type, obj_id, conn=None,
         obj_id
     ))
 
-    form_versions = utils.get_form_versions(su_conn, form_master, form_id)
+    form_versions = utils.get_form_versions(su_conn, conn, form_master,
+                                            form_id)
 
     return HttpJsonResponse({
         'data': data,
         'versions': form_versions
     }, cls=utils.DatetimeEncoder)
+
+
+@login_required(setGroupContext=True)
+@with_su
+def get_formid_editable(request, form_id, conn=None, su_conn=None,
+                        form_master=None, **kwargs):
+
+    if request.method != 'GET':
+        return HttpResponseNotAllowed('Methods allowed: GET')
+
+    form = utils.get_form_version(su_conn, conn, form_master, form_id)
+
+    editable = True
+    if form is not None:
+        editable = form['editable']
+
+    return HttpJsonResponse(
+        {
+            'editable': editable
+        },
+        cls=utils.DatetimeEncoder
+    )
 
 
 @login_required(setGroupContext=True)
@@ -318,7 +341,7 @@ def save_form(request, conn=None, su_conn=None, form_master=None, **kwargs):
 
     # Ensure that if this form already exists, the user has permission to
     # overwrite it (i.e. is an owner)
-    existing_form = utils.get_form_version(su_conn, form_master, form_id)
+    existing_form = utils.get_form_version(su_conn, conn, form_master, form_id)
     if existing_form is not None:
         if user_id not in existing_form['owners'] and admin is not True:
             return HttpResponseUnauthorized(

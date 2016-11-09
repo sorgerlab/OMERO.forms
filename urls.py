@@ -60,6 +60,11 @@ urlpatterns = patterns(
         views.get_users,
         name='omeroforms_get_users'),
 
+    # Check form id ownership
+    url(r'^get_formid_editable/(?P<form_id>[\w ]+)/$',
+        views.get_formid_editable,
+        name='omeroforms_get_formid_editable'),
+
     # Save a form version (potentially a new form)
     url(r'^save_form/$',
         views.save_form,
