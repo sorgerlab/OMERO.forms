@@ -34,7 +34,7 @@ urlpatterns = patterns(
 
     # Get data for a form (latest version) for a certain object
     url(r'^get_form_data/'
-        r'(?P<form_id>\w+)/(?P<obj_type>\w+)/(?P<obj_id>[\w ]+)/$',
+        r'(?P<form_id>[\w ]+)/(?P<obj_type>\w+)/(?P<obj_id>[\w ]+)/$',
         views.get_form_data,
         name='omeroforms_get_form_data'),
 
@@ -46,7 +46,7 @@ urlpatterns = patterns(
     # Get the entire history of a form including all data and the forms used
     # to enter that data
     url(r'^get_form_data_history/'
-        r'(?P<form_id>\w+)/(?P<obj_type>\w+)/(?P<obj_id>[\w ]+)/$',
+        r'(?P<form_id>[\w ]+)/(?P<obj_type>\w+)/(?P<obj_id>[\w ]+)/$',
         views.get_form_data_history,
         name='omeroforms_get_form_data_history'),
 
@@ -67,7 +67,7 @@ urlpatterns = patterns(
 
     # Save data for a form
     url(r'^save_form_data/'
-        r'(?P<form_id>\w+)/(?P<obj_type>\w+)/(?P<obj_id>[\w ]+)/$',
+        r'(?P<form_id>[\w ]+)/(?P<obj_type>\w+)/(?P<obj_id>[\w ]+)/$',
         views.save_form_data,
         name='omeroforms_save_form_data'),
 
