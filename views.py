@@ -293,13 +293,20 @@ def get_formid_editable(request, form_id, conn=None, su_conn=None,
 
     form = utils.get_form_version(su_conn, conn, form_master, form_id)
 
+    exists = False
     editable = True
+    owners = []
+
     if form is not None:
+        exists = True
         editable = form['editable']
+        owners = form['owners']
 
     return HttpJsonResponse(
         {
-            'editable': editable
+            'exists': exists,
+            'editable': editable,
+            'owners': owners
         },
         cls=utils.DatetimeEncoder
     )

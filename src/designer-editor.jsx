@@ -176,6 +176,8 @@ export default class Editor extends React.Component {
       liveValidate: true,
       formTypes: [],
       editable: true,
+      owners: [],
+      exists: false,
       nameEdit: false,
       previousFormId: undefined,
       previousSchema: undefined,
@@ -222,6 +224,8 @@ export default class Editor extends React.Component {
           formData: {},
           formTypes: form.objTypes,
           editable: form.editable,
+          owners: form.owners,
+          exists: true,
           previousFormId: form.id,
           previousSchema: schema,
           previousUISchema: uiSchema,
@@ -339,7 +343,9 @@ export default class Editor extends React.Component {
     ).then(
       jsonData => {
         this.setState({
-          editable: jsonData.editable
+          editable: jsonData.editable,
+          owners: jsonData.owners,
+          exists: jsonData.exists
         });
       }
     );
@@ -364,6 +370,7 @@ export default class Editor extends React.Component {
       editor,
       formTypes,
       editable,
+      exists,
       nameEdit,
       previousSchema,
       previousUISchema,
@@ -385,7 +392,7 @@ export default class Editor extends React.Component {
     const unsaved = schema !== previousSchema || uiSchema !== previousUISchema || formTypes !== previousFormTypes;
 
     let editStatus = (
-      <div className='alert alert-success form-small-alert'><strong>Valid form name</strong></div>
+      <div className='alert alert-success form-small-alert'><strong>Valid form name{ exists && ' (Existing Form)'}</strong></div>
     );
 
     if (!formId || formId.length === 0) {
