@@ -176,6 +176,7 @@ export default class Forms extends React.Component {
             formData={ data }
             onSubmit={ this.submitForm }
             onChange={ this.onFormDataChange }
+            liveValidate={ true }
           />
 
 
