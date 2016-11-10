@@ -971,7 +971,7 @@ def get_managed_groups(conn):
                 JOIN grp.groupExperimenterMap grexp
                 WHERE grp.name != 'user'
                 AND grexp.child.id = :mid
-                AND grexp.owner = false
+                AND grexp.owner = true
                 ORDER BY lower(grp.name)
              """
 
