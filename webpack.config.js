@@ -11,7 +11,7 @@ module.exports = {
     'designer.min': ['whatwg-fetch', './src/designer.jsx'],
   },
   output: {
-    path: './static/forms/js',
+    path: './omero_forms/static/forms/js',
     filename: '[name].js',
     library: 'omeroforms'
   },

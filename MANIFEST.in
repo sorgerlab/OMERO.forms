@@ -1,0 +1,3 @@
+include README.rst
+include License.txt
+recursive-include omero_forms *

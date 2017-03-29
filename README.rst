@@ -3,7 +3,7 @@ OMERO.forms
 
 OMERO.forms is an extension to OMERO.web to enhance metadata input and provide provenance. Forms can be designed in a powerful and flexible JSON Schema, using the Designer - Editor component of OMERO.forms. These can then be assigned for use to appropriate groups by group owners or administrators. Users can then populate these forms for container objects (Such as a Dataset or Screen). The history of both the form (as it may evolve over time) and the data entered into it for an object is recorded in an immutable fashion. At any point it is possible to see what metadata was entered into a specific version of a form previously. Finally, the metadata entered into a form is reduced to an OMERO MapAnnotation and attached to the object for use by computational methods.
 
-The design of the forms themselves is based on [IETF JSON Schema Internet Draft Version 4](http://json-schema.org/documentation.html). A demonstration environment with a number of examples that could be used in OMERO.forms is available [here](https://mozilla-services.github.io/react-jsonschema-form/).
+The design of the forms themselves is based on `IETF JSON Schema Internet Draft Version 4 <http://json-schema.org/documentation.html>`_. A demonstration environment with a number of examples that could be used in OMERO.forms is available, `react-jsonschema-form <https://mozilla-services.github.io/react-jsonschema-form/>`_.
 
 Usage
 =====
@@ -57,7 +57,7 @@ The forms that are assigned to the users current group are displayed in a list. 
 
 Any errors with the current input (such as missing mandatory fields) are displayed at the top of the form. The form can not be submitted if it is not valid.
 
-When submitting any form metadata, an additional optional input field **Change Message** is always present. This can (and is highly recommended to) be used to add a comment about the reason for the update. Anyone familiar with version control systems such as [git](https://git-scm.com/) will recognise this as a commit message.
+When submitting any form metadata, an additional optional input field **Change Message** is always present. This can (and is highly recommended to) be used to add a comment about the reason for the update. Anyone familiar with version control systems such as `git <https://git-scm.com/>`_ will recognise this as a commit message.
 
 Once the user has populated the form to their satisfaction and it is valid, the form can be submitted. The submitted form metadata is recorded in an immutable metadata store and also, converted into an OMERO MapAnnotation. The MapAnnotation is attached to the object for which the form was populated. This can then be used in computational steps such as an analysis.
 
@@ -71,33 +71,35 @@ The list of changes in reverse chronological order are presented on the left alo
 Installation
 ============
 
-Documentation for using PYTHONPATH to allow omero to find webapps is [here](https://www.openmicroscopy.org/site/support/omero5/developers/Web/CreateApp.html#add-your-app-location-to-your-pythonpath).
+The recommended installation makes use of `pip`, but other options are possible as documentated `in the offical OME docs <https://www.openmicroscopy.org/site/support/omero5/developers/Web/CreateApp.html#add-your-app-location-to-your-pythonpath>`_.
 
-Before configuring the plugin, create an administrative user in OMERO. In this example that user is called 'formmaster'. This user should not be a member of any groups other than the 'system' group that all administrators are a part of. Give this user a secure password.
+Before configuring the plugin, create an administrative user in OMERO. In this example that user is called 'formmaster'. This user should not be a member of any groups other than the 'system' group that all administrators are a part of. Give this user a secure password. This can be done with the CLI.
+
+::
+
+  omero user add formmaster form master system
+
 
 Perform the installation steps
 
-```sh
-# Clone the repository in to a location outside of the Omero.web installation, e.g. `~/Checkout/forms`
-cd Checkout
-git clone https://github.com/dpwrussell/OMERO.forms.git forms
+::
 
-# Add this location to the PYTHONPATH
-export PYTHONPATH=~/Checkout/forms:$PYTHONPATH
+  # In the python environment of OMERO.web (virtualenv or global)
+  pip install omero-forms
 
-# Add OMERO.forms to webclient
-omero config append omero.web.apps '"forms"'
+  # Add OMERO.forms to webclient
+  omero config append omero.web.apps '"omero_forms"'
 
-# Add OMERO.forms to centre panel
-omero config append omero.web.ui.center_plugins '["Forms", "forms/forms_init.js.html", "omero_forms_panel"]'
+  # Add OMERO.forms to centre panel
+  omero config append omero.web.ui.center_plugins '["Forms", "forms/forms_init.js.html", "omero_forms_panel"]'
 
-# Add a top-link to the OMERO.forms designer. Note: This example would remove any other
-omero config append omero.web.ui.top_links '["Forms Designer", "omeroforms_designer", {"title": "Open OMERO.Forms in a new tab", "target": "new"}]'
+  # Add a top-link to the OMERO.forms designer
+  omero config append omero.web.ui.top_links '["Forms Designer", "omeroforms_designer", {"title": "Open OMERO.Forms in a new tab", "target": "new"}]'
 
-# Configure the form master user
-omero config set omero.web.forms.priv.user 'formmaster'
-omero config set omero.web.forms.priv.password 'changeit'
-```
+  # Configure the form master user
+  omero config set omero.web.forms.priv.user 'formmaster'
+  omero config set omero.web.forms.priv.password 'changeit'
+
 
 Contributing
 ================
@@ -110,10 +112,11 @@ Building for production
 This will build `static/forms/js/bundle.js` which contains basically the whole
 project including CSS. It is minified.
 
-``` bash
-npm install
-node_modules/webpack/bin/webpack.js -p
-```
+::
+
+  npm install
+  node_modules/webpack/bin/webpack.js -p
+
 
 Building for development
 ========================
@@ -122,7 +125,7 @@ This will detect changes and rebuild `static/forms/js/bundle.js` when there
 are any. This works in conjunction with django development server as that
 will be monitoring `bundle.js` for any changes.
 
-``` bash
-npm install
-node_modules/webpack/bin/webpack.js --watch
-```
+::
+
+  npm install
+  node_modules/webpack/bin/webpack.js --watch

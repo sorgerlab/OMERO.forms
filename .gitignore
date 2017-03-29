@@ -3,7 +3,10 @@
 *.pyc
 local_settings.py
 .DS_Store
-
+*.egg-info
+static
+dist
 node_modules
+build
 omero.cfg
 omero_su.cfg

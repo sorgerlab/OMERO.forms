@@ -20,8 +20,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from forms import settings
-from forms import utils
+from . import settings
+from . import utils
 
 OMERO_FORMS_PRIV_UID = None
 
