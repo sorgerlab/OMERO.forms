@@ -45,7 +45,7 @@ def now():
 
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-GIT_API_URL = 'https://api.github.com/repos/dpwrussell/OMERO.forms'
+GIT_API_URL = 'https://api.github.com/repos/sorgerlab/OMERO.forms'
 VERSION = read_version(DIR_PATH)
 
 # Ensure that external tools exist
