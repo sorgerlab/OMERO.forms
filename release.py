@@ -3,7 +3,6 @@ import json
 from subprocess import check_call
 import git
 import requests
-from time import time
 from datetime import datetime
 
 
