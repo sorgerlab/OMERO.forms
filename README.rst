@@ -5,6 +5,12 @@ OMERO.forms is an extension to OMERO.web to enhance metadata input and provide p
 
 The design of the forms themselves is based on `IETF JSON Schema Internet Draft Version 4 <http://json-schema.org/documentation.html>`_. A demonstration environment with a number of examples that could be used in OMERO.forms is available, `react-jsonschema-form <https://mozilla-services.github.io/react-jsonschema-form/>`_.
 
+
+Design Details
+==============
+
+Further details about the design can be found in `design.rst <design.rst>`_
+
 Usage
 =====
 
