@@ -60,7 +60,7 @@ def add_form_version(
 
     namespace = "hms.harvard.edu/omero/forms/schema/%s" % form_id
     params = omero.sys.ParametersI()
-    params.add("mid", omero.rtypes.wrap(int(master_user_id)))
+    params.addLong("mid", master_user_id)
     params.add("ns", omero.rtypes.wrap(namespace))
 
     json_data = json.dumps(
@@ -160,7 +160,7 @@ def _get_assignments(conn, master_user_id, group_id=None, form_id=None):
         namespace += "/%/%"
 
     params = omero.sys.ParametersI()
-    params.add("mid", omero.rtypes.wrap(int(master_user_id)))
+    params.addLong("mid", master_user_id)
     params.add("ns", omero.rtypes.wrap(namespace))
 
     # Get all the assignments
@@ -239,7 +239,7 @@ def list_forms(conn, master_user_id, group_id=None, obj_type=None):
         )
 
     params = omero.sys.ParametersI()
-    params.add("mid", omero.rtypes.wrap(int(master_user_id)))
+    params.addLong("mid", master_user_id)
 
     # Get all the annotations attached to the form master user
     q = """
@@ -305,7 +305,7 @@ def _get_form(conn, master_user_id, form_id):
 
     namespace = "hms.harvard.edu/omero/forms/schema/%s" % form_id
     params = omero.sys.ParametersI()
-    params.add("mid", omero.rtypes.wrap(int(master_user_id)))
+    params.addLong("mid", master_user_id)
     params.add("ns", omero.rtypes.wrap(namespace))
 
     q = """
@@ -513,7 +513,7 @@ def assign_form(conn, master_user_id, form_id, add_group_ids=[], remove_group_id
         ]
 
         params = omero.sys.ParametersI()
-        params.add("mid", omero.rtypes.wrap(int(master_user_id)))
+        params.addLong("mid", master_user_id)
         params.add("nss", omero.rtypes.wrap(namespaces))
 
         qs = conn.getQueryService()
@@ -561,7 +561,7 @@ def _get_form_data(conn, master_user_id, form_id, obj_type, obj_id):
     )
 
     params = omero.sys.ParametersI()
-    params.add("mid", omero.rtypes.wrap(int(master_user_id)))
+    params.addLong("mid", master_user_id)
     params.add("ns", omero.rtypes.wrap(namespace))
 
     qs = conn.getQueryService()
@@ -592,7 +592,7 @@ def list_form_data_orphans(conn, master_user_id):
     namespace = "hms.harvard.edu/omero/forms/data/%"
 
     params = omero.sys.ParametersI()
-    params.add("mid", omero.rtypes.wrap(int(master_user_id)))
+    params.addLong("mid", master_user_id)
     params.add("ns", omero.rtypes.wrap(namespace))
 
     # Get all the data annotations
@@ -631,7 +631,7 @@ def list_form_data_orphans(conn, master_user_id):
     for obj_type, obj_ids in obj_types_ids.items():
 
         params = omero.sys.ParametersI()
-        params.add("oids", omero.rtypes.wrap(obj_ids))
+        params.addLongs("oids", obj_ids)
 
         q = (
             """
@@ -789,7 +789,7 @@ def _get_object(conn, obj_type, obj_id):
     """
 
     params = omero.sys.ParametersI()
-    params.add("oid", omero.rtypes.wrap(int(obj_id)))
+    params.addLong("oid", obj_id)
 
     qs = conn.getQueryService()
     q = (
@@ -823,7 +823,7 @@ def _get_form_kvdata(conn, form_id, obj_type, obj_id):
     namespace = "hms.harvard.edu/omero/forms/kvdata/%s" % form_id
 
     params = omero.sys.ParametersI()
-    params.add("oid", omero.rtypes.wrap(int(obj_id)))
+    params.addLong("oid", obj_id)
     params.add("ns", omero.rtypes.wrap(namespace))
 
     qs = conn.getQueryService()
@@ -975,7 +975,7 @@ def get_managed_groups(conn):
 
     if conn.isAdmin() is not True:
         user = conn.getUser()
-        params.add("mid", rlong(user.getId()))
+        params.addLong("mid", user.getId())
         q += """
                 JOIN grp.groupExperimenterMap grexp
                 WHERE grp.name != 'user'
@@ -998,7 +998,7 @@ def get_users(conn, user_ids):
     params = omero.sys.ParametersI()
     service_opts = deepcopy(conn.SERVICE_OPTS)
     service_opts.setOmeroGroup(-1)
-    params.add("uids", wrap(omero.rtypes.wrap(user_ids)))
+    params.addLongs("uids", user_ids)
 
     qs = conn.getQueryService()
     q = """

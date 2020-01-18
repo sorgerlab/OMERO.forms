@@ -5,6 +5,7 @@ from django.http import (
     HttpResponseBadRequest,
     Http404,
     HttpResponseServerError,
+    JsonResponse,
 )
 
 from omeroweb.webclient.decorators import login_required, render_response
@@ -44,7 +45,7 @@ def get_priv_uid(conn):
     qs = conn.getQueryService()
 
     params = omero.sys.ParametersI()
-    params.add("username", omero.rtypes.wrap(str(settings.OMERO_FORMS_PRIV_USER)))
+    params.add("username", rstring(settings.OMERO_FORMS_PRIV_USER))
 
     q = """
         SELECT user.id
@@ -57,13 +58,6 @@ def get_priv_uid(conn):
 
     OMERO_FORMS_PRIV_UID = rows[0][0].val
     return OMERO_FORMS_PRIV_UID
-
-
-class HttpJsonResponse(HttpResponse):
-    def __init__(self, content, cls=json.JSONEncoder.default):
-        HttpResponse.__init__(
-            self, json.dumps(content, cls=cls), content_type="application/json"
-        )
 
 
 def with_su(func):
@@ -105,10 +99,7 @@ def list_forms(request, conn=None, su_conn=None, form_master=None, **kwargs):
     if request.method != "GET":
         return HttpResponseNotAllowed("Methods allowed: GET")
 
-    return HttpJsonResponse(
-        {"forms": list(utils.list_forms(su_conn, form_master))},
-        cls=utils.DatetimeEncoder,
-    )
+    return JsonResponse({"forms": list(utils.list_forms(su_conn, form_master))})
 
 
 @login_required(setGroupContext=True)
@@ -132,9 +123,8 @@ def list_applicable_forms(
     if group_id is None:
         group_id = conn.getEventContext().groupId
 
-    return HttpJsonResponse(
-        {"forms": list(utils.list_forms(su_conn, form_master, group_id, obj_type))},
-        cls=utils.DatetimeEncoder,
+    return JsonResponse(
+        {"forms": list(utils.list_forms(su_conn, form_master, group_id, obj_type))}
     )
 
 
@@ -150,7 +140,7 @@ def get_form(request, form_id, conn=None, su_conn=None, form_master=None, **kwar
     if form is None:
         raise Http404("Form: %s, not found" % form_id)
 
-    return HttpJsonResponse({"form": form}, cls=utils.DatetimeEncoder)
+    return JsonResponse({"form": form})
 
 
 @login_required(setGroupContext=True)
@@ -186,7 +176,7 @@ def get_form_data(
 
     form_data = utils.get_form_data(su_conn, form_master, form_id, obj_type, obj_id)
 
-    return HttpJsonResponse({"data": form_data}, cls=utils.DatetimeEncoder)
+    return JsonResponse({"data": form_data})
 
 
 @login_required(setGroupContext=True)
@@ -195,9 +185,7 @@ def get_managed_groups(request, conn=None, **kwargs):
     if request.method != "GET":
         return HttpResponseNotAllowed("Methods allowed: GET")
 
-    return HttpJsonResponse(
-        {"groups": utils.get_managed_groups(conn)}, cls=utils.DatetimeEncoder
-    )
+    return JsonResponse({"groups": utils.get_managed_groups(conn)})
 
 
 @login_required(setGroupContext=True)
@@ -209,13 +197,12 @@ def get_form_assignments(request, conn=None, su_conn=None, form_master=None, **k
 
     managed_group_ids = [group["id"] for group in utils.get_managed_groups(conn)]
 
-    return HttpJsonResponse(
+    return JsonResponse(
         {
             "assignments": utils.get_group_assignments(
                 su_conn, form_master, managed_group_ids
             )
-        },
-        cls=utils.DatetimeEncoder,
+        }
     )
 
 
@@ -232,7 +219,7 @@ def get_users(request, conn=None, **kwargs):
 
     users = list(utils.get_users(conn, user_ids))
 
-    return HttpJsonResponse({"users": users,}, cls=utils.DatetimeEncoder)
+    return JsonResponse({"users": users,})
 
 
 @login_required(setGroupContext=True)
@@ -272,9 +259,7 @@ def get_form_data_history(
 
     form_versions = utils.get_form_versions(su_conn, form_master, form_id)
 
-    return HttpJsonResponse(
-        {"data": data, "versions": form_versions}, cls=utils.DatetimeEncoder
-    )
+    return JsonResponse({"data": data, "versions": form_versions})
 
 
 @login_required(setGroupContext=True)
@@ -297,10 +282,7 @@ def get_formid_editable(
         editable = form["editable"]
         owners = form["owners"]
 
-    return HttpJsonResponse(
-        {"exists": exists, "editable": editable, "owners": owners},
-        cls=utils.DatetimeEncoder,
-    )
+    return JsonResponse({"exists": exists, "editable": editable, "owners": owners})
 
 
 @login_required(setGroupContext=True)
@@ -360,7 +342,7 @@ def save_form(request, conn=None, su_conn=None, form_master=None, **kwargs):
         obj_types,
     )
 
-    return HttpJsonResponse({"form": form_version}, cls=utils.DatetimeEncoder)
+    return JsonResponse({"form": form_version})
 
 
 @login_required(setGroupContext=True)
@@ -475,88 +457,10 @@ def save_form_assignment(request, conn=None, su_conn=None, form_master=None, **k
     # TODO Copy of get_form_assignments, refactor
     managed_group_ids = [group["id"] for group in utils.get_managed_groups(conn)]
 
-    return HttpJsonResponse(
+    return JsonResponse(
         {
             "assignments": utils.get_group_assignments(
                 su_conn, form_master, managed_group_ids
             )
-        },
-        cls=utils.DatetimeEncoder,
+        }
     )
-
-
-# OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD
-
-
-#
-#
-#
-
-#
-# #
-# # @login_required(setGroupContext=True)
-# # def dataset_keys(request, conn=None, **kwargs):
-# #
-# #     # TODO Indicate whether this user can populate the form.
-# #     # Private group: Yes, if own data, which it always will be.
-# #     # Read-only group: Yes, if owner. No, otherwise
-# #     # Read-annotate group: Yes, always
-# #     # Read-write group: Forms disabled
-# #
-# #     if request.method != 'GET':
-# #         return HttpResponseNotAllowed('Methods allowed: GET')
-# #
-# #     obj_id = request.GET.get('objId')
-# #
-# #     if not obj_id:
-# #         return HttpResponseBadRequest('Object ID required')
-# #
-# #     obj_id = long(obj_id)
-# #
-# #     obj_type = request.GET.get('objType')
-# #
-# #     if not obj_type:
-# #         return HttpResponseBadRequest('Object type required')
-# #
-# #     obj_types = ['Dataset', 'Project', 'Plate', 'Screen']
-# #     if obj_type not in obj_types:
-# #         return HttpResponseBadRequest(
-# #             'Object type in ' + ','.join(obj_types) + ' required'
-# #         )
-# #
-# #     group_id = request.session.get('active_group')
-# #     if group_id is None:
-# #         group_id = conn.getEventContext().groupId
-# #
-# #     # Set the desired group context
-# #     # TODO Test when this takes hold if at all?
-# #     # conn.SERVICE_OPTS.setOmeroGroup(group_id)
-# #
-# #     su_conn = conn.clone()
-# #
-# #     su_conn.setIdentity(
-# #         settings.OMERO_FORMS_PRIV_USER,
-# #         settings.OMERO_FORMS_PRIV_PASSWORD
-# #     )
-# #
-# #     if not su_conn.connect():
-# #         # TODO Throw Exception
-# #         pass
-# #
-# #     forms = utils.list_forms(su_conn, get_priv_uid(conn), group_id, obj_type)
-# #
-# #     # # TODO Handle this in a single query?
-# #     for form in forms:
-# #         form_data = utils.get_form_data(
-# #             su_conn, get_priv_uid(conn), form['formId'],
-# #             obj_type, obj_id
-# #         )
-# #         if form_data is not None:
-# #             form['formData'] = form_data['formData']
-# #
-# #     return HttpJsonResponse(
-# #         {
-# #             'forms': forms
-# #         },
-# #         cls=utils.DatetimeEncoder
-# #     )
