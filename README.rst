@@ -77,8 +77,6 @@ The list of changes in reverse chronological order are presented on the left alo
 Installation
 ============
 
-The recommended installation makes use of `pip`, but other options are possible as documentated `in the offical OME docs <https://www.openmicroscopy.org/site/support/omero5/developers/Web/CreateApp.html#add-your-app-location-to-your-pythonpath>`_.
-
 Before configuring the plugin, create an administrative user in OMERO. In this example that user is called 'formmaster'. This user should not be a member of any groups other than the 'system' group that all administrators are a part of. Give this user a secure password. This can be done with the CLI.
 
 ::
