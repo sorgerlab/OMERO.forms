@@ -70,7 +70,7 @@ Once the user has populated the form to their satisfaction and it is valid, the 
 Centre Panel Plugin - History
 =============================
 
-The centre penal plugin History is where users can view the history of metadata for the current OMERO object.
+The centre panel plugin History is where users can view the history of metadata for the current OMERO object.
 
 The list of changes in reverse chronological order are presented on the left along with the timestamp at which they were entered, the user name of the editor and the change message (if present). Selecting any of these changes will render the form that was used to enter those changes on the right, populated with the metadata that was submitted in that change.
 
