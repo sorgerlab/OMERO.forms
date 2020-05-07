@@ -133,9 +133,15 @@ for remote in repo.remotes:
     remote.fetch()
 
 # Register and upload to pypi
-print("Registering with pypi...")
-check_call(["twine", "register", "-r", "pypi", "dist/omero-forms-%s.tar.gz" % VERSION])
 print("Uploading to pypi...")
-check_call(["twine", "upload", "-r", "pypi", "dist/omero-forms-%s.tar.gz" % VERSION])
+check_call(
+    [
+        "twine",
+        "upload",
+        "-r",
+        "pypi",
+        "dist/omero-forms-%s.tar.gz" % VERSION
+    ]
+)
 
 print("Successful release of OMERO.forms %s" % VERSION)
