@@ -70,14 +70,12 @@ Once the user has populated the form to their satisfaction and it is valid, the 
 Centre Panel Plugin - History
 =============================
 
-The centre penal plugin History is where users can view the history of metadata for the current OMERO object.
+The centre panel plugin History is where users can view the history of metadata for the current OMERO object.
 
 The list of changes in reverse chronological order are presented on the left along with the timestamp at which they were entered, the user name of the editor and the change message (if present). Selecting any of these changes will render the form that was used to enter those changes on the right, populated with the metadata that was submitted in that change.
 
 Installation
 ============
-
-The recommended installation makes use of `pip`, but other options are possible as documentated `in the offical OME docs <https://www.openmicroscopy.org/site/support/omero5/developers/Web/CreateApp.html#add-your-app-location-to-your-pythonpath>`_.
 
 Before configuring the plugin, create an administrative user in OMERO. In this example that user is called 'formmaster'. This user should not be a member of any groups other than the 'system' group that all administrators are a part of. Give this user a secure password. This can be done with the CLI.
 
