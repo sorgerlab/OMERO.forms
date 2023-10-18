@@ -5,7 +5,7 @@ import 'codemirror/mode/javascript/javascript';
 import { shouldRender } from 'react-jsonschema-form/lib/utils';
 import defaultData from './designer-default';
 const samples = {};
-import Form from 'react-jsonschema-form';
+import Form from '@rjsf/core';
 import { Modal, Button, FormGroup, FormControl, ControlLabel, HelpBlock, Checkbox } from 'react-bootstrap'
 
 // Patching CodeMirror#componentWillReceiveProps so it's executed synchronously
