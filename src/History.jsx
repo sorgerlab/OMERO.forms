@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Select from 'react-select';
-import Form from "react-jsonschema-form";
+import Form from '@rjsf/core';
 
 const padDate = v => {
   return v < 10 ? '0' + v : v
