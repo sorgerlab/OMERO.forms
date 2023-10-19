@@ -2,7 +2,7 @@ import React from 'react';
 import CodeMirror from 'react-codemirror2';
 import Select from 'react-select';
 import 'codemirror/mode/javascript/javascript';
-import { shouldRender } from 'react-jsonschema-form/lib/utils';
+import { shouldRender } from "@rjsf/core/lib/utils";
 import defaultData from './designer-default';
 const samples = {};
 import Form from '@rjsf/core';
