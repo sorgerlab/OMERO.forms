@@ -1,5 +1,5 @@
 import React from 'react';
-import Codemirror from 'react-codemirror';
+import CodeMirror from 'react-codemirror2';
 import Select from 'react-select';
 import 'codemirror/mode/javascript/javascript';
 import { shouldRender } from 'react-jsonschema-form/lib/utils';
@@ -10,7 +10,7 @@ import { Modal, Button, FormGroup, FormControl, ControlLabel, HelpBlock, Checkbo
 
 // Patching CodeMirror#componentWillReceiveProps so it's executed synchronously
 // Ref https://github.com/mozilla-services/react-jsonschema-form/issues/174
-Codemirror.prototype.componentWillReceiveProps = function (nextProps) {
+CodeMirror.prototype.componentWillReceiveProps = function (nextProps) {
   if (this.codeMirror &&
       nextProps.value !== undefined &&
       this.codeMirror.getValue() != nextProps.value) {
