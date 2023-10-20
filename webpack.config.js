@@ -1,6 +1,6 @@
 // webpack.config.js
 var webpack = require('webpack');
-
+const TerserPlugin = require("terser-webpack-plugin");
 var path = require('path');
 
 module.exports = {
@@ -10,17 +10,16 @@ module.exports = {
     'designer': ['whatwg-fetch', './src/designer.jsx'],
     'designer.min': ['whatwg-fetch', './src/designer.jsx'],
   },
+  optimization: {
+    minimize: true,
+    minimizer: [new TerserPlugin()],
+  },
   output: {
     path: './omero_forms/static/forms/js',
     filename: '[name].js',
     library: 'omeroforms'
   },
-  plugins: [
-    new webpack.optimize.UglifyJsPlugin({
-      include: /\.min\.js$/,
-      minimize: true
-    })
-  ],
+  plugins: [],
   module: {
     loaders: [
       {
