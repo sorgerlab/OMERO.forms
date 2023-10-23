@@ -15,7 +15,7 @@ module.exports = {
     minimizer: [new TerserPlugin()],
   },
   output: {
-    path: './omero_forms/static/forms/js',
+    path: __dirname + '/omero_forms/static/forms/js',
     filename: '[name].js',
     library: 'omeroforms'
   },
