@@ -50,7 +50,7 @@ module.exports = {
           {
             loader: "url-loader",
             options: {
-              limit=100000,
+              limit: 100000,
             },
           },
         ],
@@ -59,19 +59,47 @@ module.exports = {
       // Bootstrap
       {
         test: /\.(woff|woff2)(\?v=\d+\.\d+\.\d+)?$/,
-        use: ['url?limit=10000&mimetype=application/font-woff'],
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 10000,
+              mimetype: 'application/font-woff',
+            },
+          },
+        ],
       },
       {
         test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
-        use: ['url?limit=10000&mimetype=application/octet-stream'],
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 10000,
+              mimetype: 'application/octet-stream',
+            },
+          },
+        ],
       },
       {
         test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
-        use: ['file'],
+        use: [
+          {
+            loader: 'file-loader',
+          },
+        ],
       },
       {
         test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-        use: ['url?limit=10000&mimetype=image/svg+xml'],
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 10000,
+              mimetype: 'image/svg+xml',
+            },
+          },
+        ],
       }
 
     ]
