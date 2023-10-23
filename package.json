@@ -21,7 +21,6 @@
       ["@babel/plugin-proposal-class-properties", { "loose": false }],
       "@babel/plugin-proposal-json-strings"
     ],
-  },
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.40",
     "@babel/cli": "^7.0.0-beta.40",
