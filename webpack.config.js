@@ -26,7 +26,7 @@ module.exports = {
         test: /\.jsx$/,
         loader: 'babel-loader',
         exclude: /node_modules/,
-        query: {
+        options: {
           plugins: ['transform-runtime'],
           presets: ['react', 'es2015', 'stage-2']
         }
@@ -35,7 +35,7 @@ module.exports = {
         test: /\.js$/,
         loader: 'babel-loader',
         exclude: /node_modules/,
-        query: {
+        options: {
           plugins: ['transform-runtime'],
           presets: ['es2015', 'stage-2']
         }
