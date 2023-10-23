@@ -46,7 +46,14 @@ module.exports = {
       },
       { 
         test: /\.png$/,
-        use: ["url-loader?limit=100000"],
+        use: [
+          {
+            loader: "url-loader",
+            options: {
+              limit=100000,
+            },
+          },
+        ],
       },
 
       // Bootstrap
