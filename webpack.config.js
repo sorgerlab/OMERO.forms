@@ -44,25 +44,27 @@ module.exports = {
         test: /\.css$/, // Only .css files
         use: ['style-loader', 'css-loader'], // Run both loaders
       },
-      { test: /\.png$/,
-        loader: "url-loader?limit=100000"
+      { 
+        test: /\.png$/,
+        use: ["url-loader?limit=100000"],
       },
 
       // Bootstrap
       {
         test: /\.(woff|woff2)(\?v=\d+\.\d+\.\d+)?$/,
-        loader: 'url?limit=10000&mimetype=application/font-woff'},
+        use: ['url?limit=10000&mimetype=application/font-woff'],
+      },
       {
         test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
-        loader: 'url?limit=10000&mimetype=application/octet-stream'
+        use: ['url?limit=10000&mimetype=application/octet-stream'],
       },
       {
         test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
-        loader: 'file'
+        use: ['file'],
       },
       {
         test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-        loader: 'url?limit=10000&mimetype=image/svg+xml'
+        use: ['url?limit=10000&mimetype=image/svg+xml'],
       }
 
     ]
