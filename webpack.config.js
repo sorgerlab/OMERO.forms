@@ -21,7 +21,7 @@ module.exports = {
   },
   plugins: [],
   module: {
-    loaders: [
+    rules: [
       {
         test: /\.jsx$/,
         loader: 'babel-loader',
