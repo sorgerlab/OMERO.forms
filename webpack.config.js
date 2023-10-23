@@ -42,7 +42,7 @@ module.exports = {
       },
       {
         test: /\.css$/, // Only .css files
-        loader: 'style-loader!css-loader' // Run both loaders
+        use: ['style-loader', 'css-loader'], // Run both loaders
       },
       { test: /\.png$/,
         loader: "url-loader?limit=100000"
