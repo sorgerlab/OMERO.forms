@@ -10,7 +10,7 @@
   "author": "Douglas P.W. Russell",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^8.0.0",
+    "@babel/core": "^7.23.2",
     "@babel/cli": "^8.0.0",
     "babel-loader": "^8.0.0",
     "@babel/plugin-proposal-class-properties": "^7.18.6",
