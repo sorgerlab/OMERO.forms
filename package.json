@@ -45,6 +45,6 @@
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.1",
-    "whatwg-fetch": "^1.0.0"
+    "whatwg-fetch": "^3.6.19"
   }
 }
