@@ -25,7 +25,6 @@
     "babel-polyfill": "^6.5.0",
     "@babel/preset-env": "^7.23.2",
     "@babel/preset-react": "^7.0.0-beta.40",
-    "@babel/preset-stage-2": "^7.0.0-beta.40",
     "babel-runtime": "^6.5.0",
     "codemirror": "^5.57.0",
     "css-loader": "^0.23.1",
