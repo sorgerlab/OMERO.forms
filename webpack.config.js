@@ -28,7 +28,7 @@ module.exports = {
         exclude: /node_modules/,
         options: {
           plugins: ['transform-runtime'],
-          presets: ['@babel/react', '@babel/env', '@babel/stage-2']
+          presets: ['@babel/react', '@babel/env']
         }
       },
       {
@@ -37,7 +37,7 @@ module.exports = {
         exclude: /node_modules/,
         options: {
           plugins: ['transform-runtime'],
-          presets: ['@babel/env', '@babel/stage-2']
+          presets: ['@babel/env']
         }
       },
       {
