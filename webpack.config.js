@@ -28,7 +28,7 @@ module.exports = {
         exclude: /node_modules/,
         options: {
           plugins: ['transform-runtime'],
-          presets: ['@babel/react']
+          presets: ['@babel/react', '@babel/env']
         }
       },
       {
