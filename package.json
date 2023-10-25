@@ -17,7 +17,7 @@
   },
   "author": "Douglas P.W. Russell",
   "license": "MIT",
-  "devDependencies": {
+  "dependencies": {
     "@babel/core": "^7.23.2",
     "@babel/cli": "^7.23.0",
     "babel-loader": "^7.1.5",
