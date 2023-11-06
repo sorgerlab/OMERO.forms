@@ -1,6 +1,6 @@
 // webpack.config.js
 var webpack = require('webpack');
-
+const TerserPlugin = require("terser-webpack-plugin");
 var path = require('path');
 
 module.exports = {
@@ -10,65 +10,100 @@ module.exports = {
     'designer': ['whatwg-fetch', './src/designer.jsx'],
     'designer.min': ['whatwg-fetch', './src/designer.jsx'],
   },
+  optimization: {
+    minimize: true,
+    minimizer: [new TerserPlugin()],
+  },
   output: {
-    path: './omero_forms/static/forms/js',
+    path: __dirname + '/omero_forms/static/forms/js',
     filename: '[name].js',
     library: 'omeroforms'
   },
-  plugins: [
-    new webpack.optimize.UglifyJsPlugin({
-      include: /\.min\.js$/,
-      minimize: true
-    })
-  ],
+  plugins: [],
   module: {
-    loaders: [
+    rules: [
       {
         test: /\.jsx$/,
         loader: 'babel-loader',
         exclude: /node_modules/,
-        query: {
+        options: {
           plugins: ['transform-runtime'],
-          presets: ['react', 'es2015', 'stage-2']
+          presets: ['@babel/react', '@babel/env']
         }
       },
       {
         test: /\.js$/,
         loader: 'babel-loader',
         exclude: /node_modules/,
-        query: {
+        options: {
           plugins: ['transform-runtime'],
-          presets: ['es2015', 'stage-2']
+          presets: ['@babel/env']
         }
       },
       {
         test: /\.css$/, // Only .css files
-        loader: 'style-loader!css-loader' // Run both loaders
+        use: ['style-loader', 'css-loader'], // Run both loaders
       },
-      { test: /\.png$/,
-        loader: "url-loader?limit=100000"
+      { 
+        test: /\.png$/,
+        use: [
+          {
+            loader: "url-loader",
+            options: {
+              limit: 100000,
+            },
+          },
+        ],
       },
 
       // Bootstrap
       {
         test: /\.(woff|woff2)(\?v=\d+\.\d+\.\d+)?$/,
-        loader: 'url?limit=10000&mimetype=application/font-woff'},
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 10000,
+              mimetype: 'application/font-woff',
+            },
+          },
+        ],
+      },
       {
         test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
-        loader: 'url?limit=10000&mimetype=application/octet-stream'
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 10000,
+              mimetype: 'application/octet-stream',
+            },
+          },
+        ],
       },
       {
         test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
-        loader: 'file'
+        use: [
+          {
+            loader: 'file-loader',
+          },
+        ],
       },
       {
         test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-        loader: 'url?limit=10000&mimetype=image/svg+xml'
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 10000,
+              mimetype: 'image/svg+xml',
+            },
+          },
+        ],
       }
-
     ]
   },
   resolve: {
-    extensions: ['', '.js', '.jsx', '.json']
+    extensions: ['.js', '.jsx', '.json']
   },
 };
