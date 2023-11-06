@@ -43,6 +43,8 @@
     "react-codemirror2": "^7.3.0",
     "react-dom": "^16.14.0",
     "@rjsf/core": "^5.13.4",
+    "@rjsf/utils": "^5.13.4",
+    "@rjsf/validator-ajv8": "^5.13.4",
     "react-scripts": "^5.0.1",
     "react-select": "^1.0.0-rc",
     "react-tooltip": "^4.5.1",
