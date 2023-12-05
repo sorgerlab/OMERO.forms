@@ -62,7 +62,7 @@ urlpatterns = [
         name="omeroforms_save_form_data",
     ),
     # Save a form assignment
-    url(
+    re_path(
         r"^save_form_assignment/$",
         views.save_form_assignment,
         name="omeroforms_save_form_assignment",
